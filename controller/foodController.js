@@ -2,52 +2,65 @@ const { dataSource } = require("../db/connection");
 const { Food } = require("../model/Food.js");
 const { Restuarent } = require("../model/Restuarent.js");
 const cuid = require("cuid");
-const cloudinary = require('cloudinary').v2;
-const fs=require("fs");
-const dotenv=require("dotenv");
-dotenv.config();
-
-cloudinary.config({
-    cloud_name:process.env.CLOUDINARY_NAME,
-    api_key:process.env.CLOUDINARY_API_KEY,
-    api_secret:process.env.CLOUDINARY_API_SECRET
-})
+// const cloudinary = require("../cloudinary/cloudinary.js");
+// const upload = require("../middleware/multer.js");
 
 async function createFood(req, res) {
   try {
-    const { restuarentId } = req.params.id;
+    const { restuarentId } = req.params;
+    console.log(req.body,"food data from postman");
+    // console.log(req.file,"image from postman");
 
     const restuarentRepository = dataSource.getRepository("Restuarent");
     const restuarent = await restuarentRepository.findOne({
-      where: { restuarentId },
+      where: { id: restuarentId },
     });
+
     if (!restuarent) {
       return res
         .status(404)
         .json({ message: `Restuarent not found with this id ${restuarentId}` });
     }
 
-    //save image in cloudinary
-    const result=await cloudinary.v2.uploader.upload(req.file.path);
+    // upload.single("imageFile")(req, res, async (err) => {
+    //   if (err) {
+    //     return res.status(500).json({ success: false, message: err.message });
+    //   }
 
-    const food = {
-      id: cuid(),
-      foodName: req.body.foodName,
-      foodImg: result.url,
-      foodDescription: req.body.foodDescription,
-      foodType: req.body.foodType,
-      foodCategory: req.body.foodCategory,
-      discount: 0,
-      price: req.body.price,
-      createdBy: restuarent.restuarentName,
-      createdOn: new Date(),
-      restuarent: restuarent.id,
-    };
-    const foodRepository = dataSource.getRepository("Food");
-    await foodRepository.save(food);
-    await fs.unlink(req.file.path);
-    return res.status(201).json({ message: "Food item created succesfully" });
+    //   try {
+    //     const resultImg = await cloudinary.uploader.upload(req.file.path);
+        
+
+        const food = {
+          id: cuid(),
+          foodName: req.body.foodName,
+          // foodImg: resultImg.url,
+          foodDescription: req.body.foodDescription,
+          foodType: req.body.foodType,
+          foodCategory: req.body.foodCategory,
+          discount: 0,
+          price: req.body.price,
+          createdBy: restuarent.restuarentName,
+          createdOn: new Date(),
+          restuarent: restuarent.id,
+        };
+
+        console.log(food, "food item");
+        const foodRepository = dataSource.getRepository("Food");
+        await foodRepository.save(food);
+
+        console.log("food item saved");
+
+        return res
+          .status(201)
+          .json({ message: "Food item created successfully" });
+      // } catch (uploadError) {
+      //   console.error(uploadError);
+      //   return res.status(500).json({ message: "Image upload failed" });
+      // }
+    // });
   } catch (error) {
+    console.error(error);
     return res.status(403).json({ message: "Food creation failed" });
   }
 }
@@ -167,5 +180,5 @@ module.exports = {
   getAllFoods,
   getFoodById,
   updateFood,
-  deleteFood
+  deleteFood,
 };
