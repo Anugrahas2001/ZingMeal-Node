@@ -2,14 +2,14 @@ const { dataSource } = require("../db/connection");
 const { Food } = require("../model/Food.js");
 const { Restuarent } = require("../model/Restuarent.js");
 const cuid = require("cuid");
-// const cloudinary = require("../cloudinary/cloudinary.js");
-// const upload = require("../middleware/multer.js");
+const cloudinary = require("../cloudinary/cloudinary.js");
+const upload = require("../middleware/multer.js");
 
 async function createFood(req, res) {
   try {
     const { restuarentId } = req.params;
     console.log(req.body,"food data from postman");
-    // console.log(req.file,"image from postman");
+    console.log(req.file,"image from postman");
 
     const restuarentRepository = dataSource.getRepository("Restuarent");
     const restuarent = await restuarentRepository.findOne({
@@ -22,19 +22,17 @@ async function createFood(req, res) {
         .json({ message: `Restuarent not found with this id ${restuarentId}` });
     }
 
-    // upload.single("imageFile")(req, res, async (err) => {
-    //   if (err) {
-    //     return res.status(500).json({ success: false, message: err.message });
-    //   }
-
-    //   try {
-    //     const resultImg = await cloudinary.uploader.upload(req.file.path);
-        
+    upload.single("imageFile")(req, res, async (err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+      try {
+        const resultImg = await cloudinary.uploader.upload(req.file.path);
 
         const food = {
           id: cuid(),
           foodName: req.body.foodName,
-          // foodImg: resultImg.url,
+          imageFile: resultImg.url,
           foodDescription: req.body.foodDescription,
           foodType: req.body.foodType,
           foodCategory: req.body.foodCategory,
@@ -54,11 +52,11 @@ async function createFood(req, res) {
         return res
           .status(201)
           .json({ message: "Food item created successfully" });
-      // } catch (uploadError) {
-      //   console.error(uploadError);
-      //   return res.status(500).json({ message: "Image upload failed" });
-      // }
-    // });
+      } catch (uploadError) {
+        console.error(uploadError);
+        return res.status(500).json({ message: "Image upload failed" });
+      }
+    });
   } catch (error) {
     console.error(error);
     return res.status(403).json({ message: "Food creation failed" });

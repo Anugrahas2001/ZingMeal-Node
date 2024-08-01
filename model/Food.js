@@ -28,7 +28,7 @@ const Food = new EntitySchema({
       type: "varchar",
       nullable: true,
     },
-    foodImg: {
+    imageFile: {
       type: "varchar",
       nullable: true,
     },
