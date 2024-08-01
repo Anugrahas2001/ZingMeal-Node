@@ -25,13 +25,13 @@ async function signUp(req, res) {
       restuarentStatus: "Closed",
       openingTime: openingTime,
       closingTime: closingTime,
-      createdOn:new Date(),
-      createdBy:restuarentName
+      createdOn: new Date(),
+      createdBy: restuarentName,
     };
     console.log(restuarent, "restuarent saved");
 
     const restuarentRepository = dataSource.getRepository("Restuarent");
-    console.log(restuarentRepository,"repository")
+    console.log(restuarentRepository, "repository");
     restuarentRepository.save(restuarent);
 
     console.log("going to genarate token");
@@ -77,5 +77,94 @@ async function login(req, res) {
     return res.status(403).json({ message: "Login failed" });
   }
 }
+async function deleteRestuarent(req, res) {
+  try {
+    const { id } = req.params;
+    const restuarentRepository = dataSource.getRepository("Restuarent");
+    const restuarent = await restuarentRepository.findOne({
+      where: { id: id },
+    });
+    if (!restuarent) {
+      return res
+        .status(404)
+        .json({ message: `Restuarent not found with this id ${id}` });
+    }
+    await restuarentRepository.remove(restuarent);
+    return res.status(200).json({ message: "Restuarent succesffully deleted" });
+  } catch (error) {
+    return res.status(403).json({ message: "Failed to delete restuarent" });
+  }
+}
 
-module.exports = { signUp, login };
+async function updateRestuarent(req, res) {
+  try {
+    const { id } = req.params;
+
+    const restuarentRepository = dataSource.getRepository("Restuarent");
+    const restuarent = await restuarentRepository.findOne({
+      where: { id: id },
+    });
+    if (!restuarent) {
+      return res
+        .status(404)
+        .json({ message: `Restuarent with this id ${id} not found` });
+    }
+
+    restuarent.restuarentName = req.body.restuarentName
+      ? req.body.restuarentName
+      : restuarent.restuarentName;
+
+    restuarent.restuarentImg = req.body.restuarentImg
+      ? req.body.restuarentImg
+      : restuarent.restuarentImg;
+
+    restuarent.restuarentRatings = req.body.restuarentRatings
+      ? req.body.restuarentRatings
+      : restuarent.restuarentRatings;
+
+    restuarent.restuarentStatus = req.body.restuarentStatus
+      ? req.body.restuarentStatus
+      : restuarent.restuarentStatus;
+
+    restuarent.openingTime = req.body.openingTime
+      ? req.body.openingTime
+      : restuarent.openingTime;
+
+    restuarent.closingTime = req.body.closingTime
+      ? req.body.closingTime
+      : restuarent.closingTime;
+
+    restuarent.modifiedBy = restuarent.restuarentName;
+    restuarent.modifiedOn = new Date();
+
+    await restuarentRepository.save(restuarent);
+    return res.status(200).json({
+      message: "Resturent successfully updated",
+      Data: restuarent,
+    });
+  } catch (error) {
+    return res.status(403).json({ message: "Failed update the restuarent" });
+  }
+}
+
+async function getAllRestuarents(req, res) {
+  try {
+    const restuarentRepository = dataSource.getRepository("Restuarent");
+    const allRestuarents = await restuarentRepository.find({});
+
+    return res.status(200).json({
+      message: "Successfully retrieved all restuarents",
+      Data: allRestuarents,
+    });
+  } catch (error) {
+    return res.status(403).json({ message: "Failed to retrieve restuarents" });
+  }
+}
+
+module.exports = {
+  signUp,
+  login,
+  getAllRestuarents,
+  updateRestuarent,
+  deleteRestuarent,
+};

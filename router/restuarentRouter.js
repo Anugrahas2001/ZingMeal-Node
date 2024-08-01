@@ -1,7 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { signUp, login } = require("../controller/restuarentController.js");
-const { authentication } = require("../middleware/authentication.js");
+const {
+  signUp,
+  login,
+  deleteRestuarent,
+  updateRestuarent,
+  getAllRestuarents,
+} = require("../controller/restuarentController.js");
 const {
   createFood,
   getAllFoods,
@@ -13,6 +18,12 @@ const {
 router.post("/signUp", signUp);
 
 router.post("/login", login);
+
+router.get("/allRestuarents",getAllRestuarents);
+
+router.put("/updateRestuarent/:id", updateRestuarent);
+
+router.delete("/deleteRestuarent/:id", deleteRestuarent);
 
 router.post("/createFood/:id", createFood);
 
