@@ -2,6 +2,16 @@ const { dataSource } = require("../db/connection");
 const { Food } = require("../model/Food.js");
 const { Restuarent } = require("../model/Restuarent.js");
 const cuid = require("cuid");
+const cloudinary = require('cloudinary').v2;
+const fs=require("fs");
+const dotenv=require("dotenv");
+dotenv.config();
+
+cloudinary.config({
+    cloud_name:process.env.CLOUDINARY_NAME,
+    api_key:process.env.CLOUDINARY_API_KEY,
+    api_secret:process.env.CLOUDINARY_API_SECRET
+})
 
 async function createFood(req, res) {
   try {
@@ -17,10 +27,13 @@ async function createFood(req, res) {
         .json({ message: `Restuarent not found with this id ${restuarentId}` });
     }
 
+    //save image in cloudinary
+    const result=await cloudinary.v2.uploader.upload(req.file.path);
+
     const food = {
       id: cuid(),
       foodName: req.body.foodName,
-      foodImg: req.body.foodImg,
+      foodImg: result.url,
       foodDescription: req.body.foodDescription,
       foodType: req.body.foodType,
       foodCategory: req.body.foodCategory,
@@ -32,6 +45,7 @@ async function createFood(req, res) {
     };
     const foodRepository = dataSource.getRepository("Food");
     await foodRepository.save(food);
+    await fs.unlink(req.file.path);
     return res.status(201).json({ message: "Food item created succesfully" });
   } catch (error) {
     return res.status(403).json({ message: "Food creation failed" });

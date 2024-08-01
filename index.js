@@ -1,20 +1,24 @@
 const express = require("express");
-const {dataSource}=require('./db/connection.js')
-const {userRouter}=require('./router/userRouter.js')
-const {restuarentRouter}=require('./router/restuarentRouter.js')
+const { dataSource } = require("./db/connection.js");
+const { userRouter } = require("./router/userRouter.js");
+const { restuarentRouter } = require("./router/restuarentRouter.js");
 const dotenv = require("dotenv");
 dotenv.config();
 PORT = process.env.PORT || 3000;
 
 const app = express();
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-app.use('/user',userRouter);
-app.use('/restuarent',restuarentRouter);
+app.use("/user", userRouter);
+app.use("/restuarent", restuarentRouter);
 
-app.listen(PORT,()=>{
-    console.log(`server started at post ${PORT}`)
-})
-dataSource.initialize().then(
-    ()=>{console.log('Databse initialized')}
-).catch((err)=>console.log('An error occured',err))
+app.listen(PORT, () => {
+  console.log(`server started at post ${PORT}`);
+});
+dataSource
+  .initialize()
+  .then(() => {
+    console.log("Databse initialized");
+  })
+  .catch((err) => console.log("An error occured", err));
