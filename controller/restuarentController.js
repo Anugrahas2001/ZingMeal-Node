@@ -16,22 +16,30 @@ async function signUp(req, res) {
     const encodedPassword = await encrypt.encryptPass(restuarentPassword);
     console.log(encodedPassword, "password is encoded");
 
-    const restuarent = {
+    const restuarentId = cuid();
+
+    const rating = {
       id: cuid(),
+      itemId: restuarentId,
+      itemRating: 1.0,
+    };
+    const ratingRepository = dataSource.getRepository("Rating");
+    const savedRating = ratingRepository.save(rating);
+
+    const restuarent = {
+      id: restuarentId,
       restuarentName: restuarentName,
       restuarentImg: restuarentImg,
       restuarentPassword: encodedPassword,
-      restuarentRatings: 1.0,
       restuarentStatus: "Closed",
-      openingTime: openingTime,
-      closingTime: closingTime,
+      openingTime: new Date(openingTime),
+      closingTime: new Date(closingTime),
       createdOn: new Date(),
       createdBy: restuarentName,
     };
     console.log(restuarent, "restuarent saved");
 
     const restuarentRepository = dataSource.getRepository("Restuarent");
-    console.log(restuarentRepository, "repository");
     restuarentRepository.save(restuarent);
 
     console.log("going to genarate token");

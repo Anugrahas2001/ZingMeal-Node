@@ -4,12 +4,13 @@ const { Restuarent } = require("../model/Restuarent.js");
 const cuid = require("cuid");
 const cloudinary = require("../cloudinary/cloudinary.js");
 const upload = require("../middleware/multer.js");
+const { path } = require("path");
 
 async function createFood(req, res) {
   try {
     const { restuarentId } = req.params;
-    console.log(req.body,"food data from postman");
-    console.log(req.file,"image from postman");
+    console.log(req.body, "food data from postman");
+    console.log(req.file, "image from postman");
 
     const restuarentRepository = dataSource.getRepository("Restuarent");
     const restuarent = await restuarentRepository.findOne({
@@ -22,41 +23,43 @@ async function createFood(req, res) {
         .json({ message: `Restuarent not found with this id ${restuarentId}` });
     }
 
-    upload.single("imageFile")(req, res, async (err) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: err.message });
-      }
-      try {
-        const resultImg = await cloudinary.uploader.upload(req.file.path);
+    upload.single("imageFile"),
+      (req, res) => {
+        cloudinary.uploader.upload(req.file.path, (err, result) => {
+          if (err) {
+            return res
+              .status(500)
+              .json({ message: "failed upload image in cloudinary" });
+          }
+          console.log(result, "from cloudinary");
 
-        const food = {
-          id: cuid(),
-          foodName: req.body.foodName,
-          imageFile: resultImg.url,
-          foodDescription: req.body.foodDescription,
-          foodType: req.body.foodType,
-          foodCategory: req.body.foodCategory,
-          discount: 0,
-          price: req.body.price,
-          createdBy: restuarent.restuarentName,
-          createdOn: new Date(),
-          restuarent: restuarent.id,
-        };
+          const food = {
+            id: cuid(),
+            foodName: req.body.foodName,
+            imageFile: result.url,
+            foodDescription: req.body.foodDescription,
+            foodType: req.body.foodType,
+            foodCategory: req.body.foodCategory,
+            discount: 0,
+            price: req.body.price,
+            createdBy: restuarent.restuarentName,
+            createdOn: new Date(),
+            restuarent: restuarent.id,
+          };
 
-        console.log(food, "food item");
-        const foodRepository = dataSource.getRepository("Food");
-        await foodRepository.save(food);
+          console.log(food, "food item");
+          const foodRepository = dataSource.getRepository("Food");
+          foodRepository.save(food);
 
-        console.log("food item saved");
+          console.log("food item saved");
+        });
+
+        console.log(resultImg, "image from db");
 
         return res
           .status(201)
           .json({ message: "Food item created successfully" });
-      } catch (uploadError) {
-        console.error(uploadError);
-        return res.status(500).json({ message: "Image upload failed" });
-      }
-    });
+      };
   } catch (error) {
     console.error(error);
     return res.status(403).json({ message: "Food creation failed" });

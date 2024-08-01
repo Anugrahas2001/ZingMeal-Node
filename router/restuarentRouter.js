@@ -29,7 +29,10 @@ router.post("/createFood/:id", createFood);
 
 router.get("/allFoods", getAllFoods);
 
-router.get("/food/:id", getFoodById);
+router.get("/food/:id", (req,res)=>{
+  console.log(req.body, "body");
+  console.log(req.file, "file");
+});
 
 router.put("/updateFood/:restuarentId/:foodId", updateFood);
 

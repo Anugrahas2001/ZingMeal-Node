@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
     "cloudinary": "^2.4.0",
     "concurrently": "^8.2.2",
     "cuid": "^3.0.0",

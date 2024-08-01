@@ -1,6 +1,4 @@
-const { JoinColumn } = require("typeorm");
-
-var EntitySchema = require("typeorm").EntitySchema;
+const { EntitySchema } = require("typeorm");
 
 const Restuarent = new EntitySchema({
   name: "Restuarent",
@@ -28,23 +26,23 @@ const Restuarent = new EntitySchema({
       nullable: false,
     },
     openingTime: {
-      type: "timestamp",
-      createDate: true,
+      type: "timestamptz",
+      nullable: true,
     },
     closingTime: {
-      type: "timestamp",
-      createDate: true,
+      type: "timestamptz",
+      nullable: true,
     },
     createdBy: {
       type: "varchar",
       nullable: true,
     },
-    modifiedBy: {
-      type: "varchar",
-      nullable: true,
-    },
     createdOn: {
       type: "timestamptz",
+      nullable: true,
+    },
+    modifiedBy: {
+      type: "varchar",
       nullable: true,
     },
     modifiedOn: {
@@ -56,7 +54,6 @@ const Restuarent = new EntitySchema({
     rating: {
       target: "Rating",
       type: "one-to-one",
-      JoinColumn: true,
       cascade: true,
     },
   },
