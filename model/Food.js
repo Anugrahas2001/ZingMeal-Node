@@ -26,23 +26,23 @@ const Food = new EntitySchema({
     },
     foodName: {
       type: "varchar",
-      nullable: true,
+      nullable: false,
     },
     imageFile: {
       type: "varchar",
-      nullable: true,
+      // nullable: true,
     },
     foodDescription: {
       type: "varchar",
-      nullable: true,
+      nullable: false,
     },
     foodType: {
       type: "varchar",
-      nullable: true,
+      nullable: false,
     },
     foodCategory: {
       type: "varchar",
-      nullable: true,
+      nullable: false,
     },
     discount: {
       type: "varchar",
@@ -50,7 +50,7 @@ const Food = new EntitySchema({
     },
     price: {
       type: "float",
-      nullable: true,
+      nullable: false,
     },
     createdBy: {
       type: "varchar",

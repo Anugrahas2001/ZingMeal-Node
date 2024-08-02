@@ -8,9 +8,16 @@ const { path } = require("path");
 
 async function createFood(req, res) {
   try {
+    await new Promise((resolve, reject) => {
+      upload.single("imageFile")(req, res, (err) => {
+        if (err) {
+          return reject(err);
+        } else {
+          return resolve();
+        }
+      });
+    });
     const { restuarentId } = req.params;
-    console.log(req.body, "food data from postman");
-    console.log(req.file, "image from postman");
 
     const restuarentRepository = dataSource.getRepository("Restuarent");
     const restuarent = await restuarentRepository.findOne({
@@ -22,44 +29,25 @@ async function createFood(req, res) {
         .status(404)
         .json({ message: `Restuarent not found with this id ${restuarentId}` });
     }
+    const result = await cloudinary.uploader.upload(req.file.path);
 
-    upload.single("imageFile"),
-      (req, res) => {
-        cloudinary.uploader.upload(req.file.path, (err, result) => {
-          if (err) {
-            return res
-              .status(500)
-              .json({ message: "failed upload image in cloudinary" });
-          }
-          console.log(result, "from cloudinary");
+    const food = {
+      id: cuid(),
+      foodName: req.body.foodName,
+      imageFile: result.url,
+      foodDescription: req.body.foodDescription,
+      foodType: req.body.foodType,
+      foodCategory: req.body.foodCategory,
+      discount: 0,
+      price: req.body.price,
+      createdBy: restuarent.restuarentName,
+      createdOn: new Date(),
+      restuarent: restuarent.id,
+    }
+    const foodRepository = dataSource.getRepository("Food");
+    await foodRepository.save(food);
 
-          const food = {
-            id: cuid(),
-            foodName: req.body.foodName,
-            imageFile: result.url,
-            foodDescription: req.body.foodDescription,
-            foodType: req.body.foodType,
-            foodCategory: req.body.foodCategory,
-            discount: 0,
-            price: req.body.price,
-            createdBy: restuarent.restuarentName,
-            createdOn: new Date(),
-            restuarent: restuarent.id,
-          };
-
-          console.log(food, "food item");
-          const foodRepository = dataSource.getRepository("Food");
-          foodRepository.save(food);
-
-          console.log("food item saved");
-        });
-
-        console.log(resultImg, "image from db");
-
-        return res
-          .status(201)
-          .json({ message: "Food item created successfully" });
-      };
+    return res.status(201).json({ message: "Food item created successfully" });
   } catch (error) {
     console.error(error);
     return res.status(403).json({ message: "Food creation failed" });

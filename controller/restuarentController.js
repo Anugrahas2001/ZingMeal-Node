@@ -1,10 +1,21 @@
 const { dataSource } = require("../db/connection.js");
 const { Restuarent } = require("../model/Restuarent.js");
 const Encrypt = require("../hepler/encrypt.js");
+const cloudinary = require("../cloudinary/cloudinary.js");
+const upload = require("../middleware/multer.js");
 const encrypt = new Encrypt();
 const cuid = require("cuid");
 
 async function signUp(req, res) {
+  await new Promise((resolve, reject) => {
+    upload.single("imageFile")(req, res, (err) => {
+      if (err) {
+        return reject(err);
+      } else {
+        return resolve();
+      }
+    });
+  });
   try {
     const {
       restuarentName,
@@ -15,6 +26,8 @@ async function signUp(req, res) {
     } = req.body;
     const encodedPassword = await encrypt.encryptPass(restuarentPassword);
     console.log(encodedPassword, "password is encoded");
+
+    const result = await cloudinary.uploader.upload(req.file.path);
 
     const restuarentId = cuid();
 
@@ -29,7 +42,7 @@ async function signUp(req, res) {
     const restuarent = {
       id: restuarentId,
       restuarentName: restuarentName,
-      restuarentImg: restuarentImg,
+      restuarentImg: result.url,
       restuarentPassword: encodedPassword,
       restuarentStatus: "Closed",
       openingTime: new Date(openingTime),
