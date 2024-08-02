@@ -20,6 +20,6 @@ app.listen(PORT, () => {
 dataSource
   .initialize()
   .then(() => {
-    console.log("Databse initialized");
+    console.log("Database initialized");
   })
   .catch((err) => console.log("An error occured", err));

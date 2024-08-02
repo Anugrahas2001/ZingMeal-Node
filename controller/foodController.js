@@ -43,7 +43,7 @@ async function createFood(req, res) {
       createdBy: restuarent.restuarentName,
       createdOn: new Date(),
       restuarent: restuarent.id,
-    }
+    };
     const foodRepository = dataSource.getRepository("Food");
     await foodRepository.save(food);
 
@@ -164,10 +164,81 @@ async function deleteFood(req, res) {
   }
 }
 
+async function getAllFoodsBasedOnRestuarent(req, res) {
+  try {
+    const { restuarentId } = req.params;
+
+    const restuarentRepository = dataSource.getRepository("Restuarent");
+    const restuarent = await restuarentRepository.findOne({
+      where: { id: restuarentId },
+    });
+
+    if (!restuarent) {
+      return res
+        .status(404)
+        .json({ message: `Restuarent not found with this is ${restuarentId}` });
+    }
+    const foodRepository = dataSource.getRepository("Food");
+    const allFoods = await foodRepository.findBy({
+      restuarent: { id: restuarentId },
+    });
+
+    return res.status(200).json({
+      message: "Successfully retrieved the food items",
+      Data: allFoods,
+    });
+  } catch (error) {
+    return res.status(403).json({ message: "Failed to retrieve foods" });
+  }
+}
+
+async function getFoodsBasedOnType(req, res) {
+  try {
+    const { type } = req.params;
+
+    const foodRepository = dataSource.getRepository("Food");
+    const foods = await foodRepository.find({
+      where: { foodType: type },
+    });
+
+    return res
+      .status(200)
+      .json({ message: "successfully retrieved all foods", Data: foods });
+  } catch (error) {
+    return res.status(403).json({ message: "Failed to retrieve food" });
+  }
+}
+
+async function getAllFoodsBasedOnCategory(req, res) {
+  try {
+    const { category } = req.params;
+
+    const foodRepository = dataSource.getRepository("Food");
+    const allFoods = await foodRepository.find({
+      where: { foodCategory: category },
+    });
+    console.log(allFoods, "all foods");
+
+    return res.status(200).json({
+      message: "Successfull retrieved all food items based on category",
+      Data: allFoods,
+    });
+  } catch (error) {
+    return res
+      .status(403)
+      .json({
+        message: `Failed to retriev food items for this category ${category}`,
+      });
+  }
+}
+
 module.exports = {
   createFood,
   getAllFoods,
   getFoodById,
   updateFood,
   deleteFood,
+  getAllFoodsBasedOnRestuarent,
+  getFoodsBasedOnType,
+  getAllFoodsBasedOnCategory
 };
