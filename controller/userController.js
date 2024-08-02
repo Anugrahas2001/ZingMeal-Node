@@ -1,3 +1,4 @@
+const { ILike } = require("typeorm");
 const { dataSource } = require("../db/connection.js");
 const Encrypt = require("../hepler/encrypt.js");
 const { User } = require("../model/User.js");
@@ -9,7 +10,7 @@ async function signUp(req, res) {
     const { name, email, password } = req.body;
     const encodedPassword = await encrypt.encryptPass(password);
     console.log(encodedPassword, "password is encoded");
-    // const userName = email.substring(0, email.indexOf("@"));
+    const userName = email.substring(0, email.indexOf("@"));
     const user = {
       id: cuid(),
       name: email.substring(0, email.indexOf("@")),
@@ -67,7 +68,36 @@ async function login(req, res) {
   }
 }
 
+async function searchByRestuarantOrFood(req, res) {
+  try {
+    const { query } = req.params;
+
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.find({
+      where: { restaurantName: ILike(`%${query}%`) },
+    });
+
+    if (restaurant.length > 0) {
+      return res
+        .status(200)
+        .json({ message: "Success Restuarant", Data: restaurant });
+    }
+    const foodRepository = dataSource.getRepository("Food");
+    const food = await foodRepository.find({
+      where: { foodName: ILike(`%${query}%`) },
+    });
+  
+    if (food.length > 0) {
+      return res.status(200).json({ message: "success food", Data: food });
+    }
+    return res.status(404).json({ message: "Not found", Data: [] });
+  } catch (error) {
+    return res.status(403).json({ message: "Failed" });
+  }
+}
+
 module.exports = {
   signUp,
   login,
+  searchByRestuarantOrFood,
 };

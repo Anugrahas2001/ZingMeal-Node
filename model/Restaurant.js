@@ -1,27 +1,31 @@
 const { EntitySchema } = require("typeorm");
 
-const Restuarent = new EntitySchema({
-  name: "Restuarent",
-  tableName: "restuarents",
+const Restaurant = new EntitySchema({
+  name: "Restaurant",
+  tableName: "restaurants",
   columns: {
     id: {
       primary: true,
       type: "varchar",
       length: 25,
     },
-    restuarentName: {
+    restaurantName: {
       type: "varchar",
       nullable: false,
       unique: true,
     },
-    restuarentImg: {
+    restaurantAddress: {
       type: "varchar",
       nullable: false,
     },
-    restuarentStatus: {
+    restaurantImg: {
+      type: "varchar",
+      nullable: false,
+    },
+    restaurantStatus: {
       type: "varchar",
     },
-    restuarentPassword: {
+    restaurantPassword: {
       type: "varchar",
       nullable: false,
     },
@@ -59,4 +63,4 @@ const Restuarent = new EntitySchema({
   },
 });
 
-module.exports = { Restuarent };
+module.exports = { Restaurant };

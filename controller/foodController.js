@@ -1,6 +1,6 @@
 const { dataSource } = require("../db/connection");
 const { Food } = require("../model/Food.js");
-const { Restuarent } = require("../model/Restuarent.js");
+const { Restaurant } = require("../model/Restaurant.js");
 const cuid = require("cuid");
 const cloudinary = require("../cloudinary/cloudinary.js");
 const upload = require("../middleware/multer.js");
@@ -17,17 +17,17 @@ async function createFood(req, res) {
         }
       });
     });
-    const { restuarentId } = req.params;
+    const { restaurantId } = req.params;
 
-    const restuarentRepository = dataSource.getRepository("Restuarent");
-    const restuarent = await restuarentRepository.findOne({
-      where: { id: restuarentId },
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: restaurantId },
     });
 
-    if (!restuarent) {
+    if (!restaurant) {
       return res
         .status(404)
-        .json({ message: `Restuarent not found with this id ${restuarentId}` });
+        .json({ message: `Restuarent not found with this id ${restaurantId}` });
     }
     const result = await cloudinary.uploader.upload(req.file.path);
 
@@ -40,9 +40,9 @@ async function createFood(req, res) {
       foodCategory: req.body.foodCategory,
       discount: 0,
       price: req.body.price,
-      createdBy: restuarent.restuarentName,
+      createdBy: restaurant.restaurantName,
       createdOn: new Date(),
-      restuarent: restuarent.id,
+      restaurant: restaurant.id,
     };
     const foodRepository = dataSource.getRepository("Food");
     await foodRepository.save(food);
@@ -93,18 +93,18 @@ async function getFoodById(req, res) {
 
 async function updateFood(req, res) {
   try {
-    const { restuarentId, foodId } = req.params;
-    console.log(restuarentId, "id of restuarent");
-    const restuarentRepository = dataSource.getRepository("Restuarent");
-    const restuarent = await restuarentRepository.findOne({
-      where: { id: restuarentId },
+    const { restaurantId, foodId } = req.params;
+    console.log(restaurantId, "id of restaurant");
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: restaurantId },
     });
-    if (!restuarent) {
+    if (!restaurant) {
       return res
         .status(404)
-        .json({ message: `Restuarent not found with this id ${restuarentId}` });
+        .json({ message: `Restuarent not found with this id ${restaurantId}` });
     }
-    console.log(restuarent, "to update");
+    console.log(restaurant, "to update");
 
     console.log(foodId, "foodId");
     const foodRepository = dataSource.getRepository("Food");
@@ -129,7 +129,7 @@ async function updateFood(req, res) {
       : food.foodCategory;
     food.discount = req.body.discount ? req.body.discount : food.discount;
     food.price = req.body.price ? req.body.price : food.price;
-    food.modifiedBy = restuarent.restuarentName;
+    food.modifiedBy = restaurant.restuarentName;
     food.modifiedOn = new Date();
     console.log(food, "updated food");
     await foodRepository.save(food);
@@ -164,23 +164,23 @@ async function deleteFood(req, res) {
   }
 }
 
-async function getAllFoodsBasedOnRestuarent(req, res) {
+async function getAllFoodsBasedOnRestaurant(req, res) {
   try {
-    const { restuarentId } = req.params;
+    const { restaurantId } = req.params;
 
-    const restuarentRepository = dataSource.getRepository("Restuarent");
-    const restuarent = await restuarentRepository.findOne({
-      where: { id: restuarentId },
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: restaurantId },
     });
 
-    if (!restuarent) {
+    if (!restaurant) {
       return res
         .status(404)
-        .json({ message: `Restuarent not found with this is ${restuarentId}` });
+        .json({ message: `Restuarent not found with this is ${restaurantId}` });
     }
     const foodRepository = dataSource.getRepository("Food");
     const allFoods = await foodRepository.findBy({
-      restuarent: { id: restuarentId },
+      restaurant: { id: restaurantId },
     });
 
     return res.status(200).json({
@@ -224,11 +224,9 @@ async function getAllFoodsBasedOnCategory(req, res) {
       Data: allFoods,
     });
   } catch (error) {
-    return res
-      .status(403)
-      .json({
-        message: `Failed to retriev food items for this category ${category}`,
-      });
+    return res.status(403).json({
+      message: `Failed to retriev food items for this category ${category}`,
+    });
   }
 }
 
@@ -238,7 +236,7 @@ module.exports = {
   getFoodById,
   updateFood,
   deleteFood,
-  getAllFoodsBasedOnRestuarent,
+  getAllFoodsBasedOnRestaurant,
   getFoodsBasedOnType,
-  getAllFoodsBasedOnCategory
+  getAllFoodsBasedOnCategory,
 };

@@ -13,7 +13,7 @@ const {
   getFoodById,
   updateFood,
   deleteFood,
-  getAllFoodsBasedOnRestuarent,
+  getAllFoodsBasedOnRestaurant,
   getFoodsBasedOnType,
   getAllFoodsBasedOnCategory,
 } = require("../controller/foodController.js");
@@ -22,11 +22,11 @@ router.post("/signUp", signUp);
 
 router.post("/login", login);
 
-router.get("/allRestuarents", getAllRestuarents);
+router.get("/allRestaurants", getAllRestuarents);
 
-router.put("/updateRestuarent/:id", updateRestuarent);
+router.put("/updateRestaurant/:id", updateRestuarent);
 
-router.delete("/deleteRestuarent/:id", deleteRestuarent);
+router.delete("/deleteRestaurant/:id", deleteRestuarent);
 
 router.post("/createFood/:id", createFood);
 
@@ -35,8 +35,8 @@ router.get("/allFoods", getAllFoods);
 router.get("/food/:id", getFoodById);
 
 router.get(
-  "/getAllFoodsInRestuarent/:restuarentId",
-  getAllFoodsBasedOnRestuarent
+  "/getAllFoodsInRestaurant/:restuarentId",
+  getAllFoodsBasedOnRestaurant
 );
 
 router.get("/foodByType/:foodType", getFoodsBasedOnType);

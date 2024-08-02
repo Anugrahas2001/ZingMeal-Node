@@ -70,8 +70,8 @@ const Food = new EntitySchema({
     },
   },
   relations: {
-    restuarent: {
-      target: "Restuarent",
+    restaurant: {
+      target: "Restaurant",
       type: "many-to-one",
       joinTable: true,
       cascade: true,
