@@ -10,10 +10,26 @@ const Rating = new EntitySchema({
       length: 25,
     },
     itemId: {
-      type: "varchar"
+      type: "varchar",
     },
     itemRating: {
       type: "float",
+      nullable: true,
+    },
+    createdBy: {
+      type: "varchar",
+      nullable: true,
+    },
+    createdOn: {
+      type: "timestamptz",
+      nullable: true,
+    },
+    modifiedBy: {
+      type: "varchar",
+      nullable: true,
+    },
+    modifiedOn: {
+      type: "timestamptz",
       nullable: true,
     },
   },

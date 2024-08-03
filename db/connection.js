@@ -5,6 +5,10 @@ const { Restaurant } = require("../model/Restaurant.js");
 const { RefreshToken } = require("../model/RefreshToken.js");
 const { Food } = require("../model/Food.js");
 const { Rating } = require("../model/Rating.js");
+const { Order } = require("../model/Order.js");
+const { OrderItem } = require("../model/OrderItem.js");
+const { Category } = require("../model/Category.js");
+const { CartItem } = require("../model/CartItem.js");
 dotenv.config();
 
 const { DB_PORT } = process.env;
@@ -17,7 +21,17 @@ var dataSource = new typeorm.DataSource({
   database: process.env.DB_NAME,
   synchronize: true,
   logging: false,
-  entities: [User, Restaurant, Food, Rating, RefreshToken],
+  entities: [
+    User,
+    Restaurant,
+    Food,
+    Rating,
+    RefreshToken,
+    Order,
+    OrderItem,
+    CartItem,
+    Category,
+  ],
 });
 
 module.exports = { dataSource };

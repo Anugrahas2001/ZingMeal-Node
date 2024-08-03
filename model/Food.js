@@ -1,3 +1,5 @@
+const { JoinColumn } = require("typeorm");
+
 var EntitySchema = require("typeorm").EntitySchema;
 // const {BaseEntity}=require("../model/BaseEntity")
 
@@ -73,7 +75,14 @@ const Food = new EntitySchema({
     restaurant: {
       target: "Restaurant",
       type: "many-to-one",
-      joinTable: true,
+      JoinColumn: true,
+      cascade: true,
+    },
+  },
+  relations: {
+    rating: {
+      target: "Rating",
+      type: "one-to-one",
       cascade: true,
     },
   },
