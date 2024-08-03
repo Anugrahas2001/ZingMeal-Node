@@ -5,6 +5,7 @@ const cloudinary = require("../cloudinary/cloudinary.js");
 const upload = require("../middleware/multer.js");
 const encrypt = new Encrypt();
 const cuid = require("cuid");
+const { RefreshToken } = require("../model/RefreshToken.js");
 
 async function signUp(req, res) {
   await new Promise((resolve, reject) => {
@@ -17,8 +18,13 @@ async function signUp(req, res) {
     });
   });
   try {
-    const { restaurantName,restaurantAddress, restaurantPassword, openingTime, closingTime } =
-      req.body;
+    const {
+      restaurantName,
+      restaurantAddress,
+      restaurantPassword,
+      openingTime,
+      closingTime,
+    } = req.body;
     const encodedPassword = await encrypt.encryptPass(restaurantPassword);
     console.log(encodedPassword, "password is encoded");
 
@@ -37,7 +43,7 @@ async function signUp(req, res) {
     const restaurant = {
       id: restaurantId,
       restaurantName: restaurantName,
-      restaurantAddress:restaurantAddress,
+      restaurantAddress: restaurantAddress,
       restaurantImg: result.url,
       restaurantPassword: encodedPassword,
       restaurantStatus: "Closed",
@@ -53,11 +59,25 @@ async function signUp(req, res) {
 
     console.log("going to genarate token");
 
-    const token = encrypt.generateToken({ id: restaurant.id });
-    console.log(token, "token created");
-    return res
-      .status(201)
-      .json({ message: "Restuarent created successfully", token });
+    // const token = encrypt.generateToken({ id: restaurant.id });
+
+    const accessToken = encrypt.generateToken({ id: restaurant.id });
+    const refreshToken = encrypt.generateRefreshToken({ id: restaurant.id });
+    console.log(accessToken, "access", refreshToken, "refresh token created");
+
+    const tokenRepository = dataSource.getRepository("RefreshToken");
+    const token = {
+      id: cuid(),
+      token: refreshToken,
+      itemId: restaurant.id,
+    };
+    await tokenRepository.save(token);
+
+    return res.status(201).json({
+      message: "Restuarent created successfully",
+      AccessToken: accessToken,
+      RefreshToken: refreshToken,
+    });
   } catch (error) {
     return res.status(403).json({ message: "Restuarent creation failed" });
   }
@@ -83,13 +103,21 @@ async function login(req, res) {
       return res.status(401).json({ message: "Invalid Password" });
     }
 
-    const token = encrypt.generateToken({ id: restaurant.id });
-    if (!token) {
+    const accessToken = encrypt.generateToken({ id: user.id });
+    console.log(accessToken, "token created");
+    const refreshToken = encrypt.generateRefreshToken({ id: user.id });
+    console.log(refreshToken, "Refresh token");
+
+    if (!accessToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     return res
       .status(200)
-      .json({ message: "Restuarent Login Successfully", token });
+      .json({
+        message: "Restuarent Login Successfully",
+        AccessToken: accessToken,
+        RefreshToken: refreshToken,
+      });
   } catch (error) {
     return res.status(403).json({ message: "Login failed" });
   }

@@ -2,6 +2,7 @@ var typeorm = require("typeorm");
 const dotenv = require("dotenv");
 const { User } = require("../model/User.js");
 const { Restaurant } = require("../model/Restaurant.js");
+const { RefreshToken } = require("../model/RefreshToken.js");
 const { Food } = require("../model/Food.js");
 const { Rating } = require("../model/Rating.js");
 dotenv.config();
@@ -16,7 +17,7 @@ var dataSource = new typeorm.DataSource({
   database: process.env.DB_NAME,
   synchronize: true,
   logging: false,
-  entities: [User, Restaurant, Food, Rating],
+  entities: [User, Restaurant, Food, Rating, RefreshToken],
 });
 
 module.exports = { dataSource };

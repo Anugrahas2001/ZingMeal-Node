@@ -4,13 +4,16 @@ const Encrypt = require("../hepler/encrypt.js");
 const { User } = require("../model/User.js");
 const encrypt = new Encrypt();
 const cuid = require("cuid");
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+dotenv.config();
 
 async function signUp(req, res) {
   try {
-    const { name, email, password } = req.body;
+    const { email, password } = req.body;
     const encodedPassword = await encrypt.encryptPass(password);
     console.log(encodedPassword, "password is encoded");
-    const userName = email.substring(0, email.indexOf("@"));
+
     const user = {
       id: cuid(),
       name: email.substring(0, email.indexOf("@")),
@@ -22,11 +25,25 @@ async function signUp(req, res) {
     var userRepository = dataSource.getRepository("User");
     userRepository.save(user);
 
-    const token = encrypt.generateToken({ id: user.id });
-    console.log(token, "token created");
-    return res
-      .status(201)
-      .json({ message: "User created successfully", token, user });
+    const accessToken = encrypt.generateToken({ id: user.id });
+    console.log(accessToken, "token created");
+    const refreshToken = encrypt.generateRefreshToken({ id: user.id });
+    console.log(refreshToken, "Refresh token");
+
+    const tokenRepository = dataSource.getRepository("RefreshToken");
+    const token = {
+      id: cuid(),
+      token: refreshToken,
+      itemId: user.id,
+    };
+    await tokenRepository.save(token);
+
+    return res.status(201).json({
+      message: "User created successfully",
+      user,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    });
   } catch (error) {
     return res.status(404).json({ message: "user signUp failed" });
   }
@@ -51,7 +68,6 @@ async function login(req, res) {
         .status(401)
         .json({ message: `user not found with this ${email}` });
     }
-    console.log(password, "i given");
 
     const isValidPassword = await encrypt.comparePassword(
       password,
@@ -61,8 +77,14 @@ async function login(req, res) {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    const token = encrypt.generateToken({ id: user.id });
-    return res.status(200).json({ meassage: "Login successfull", token });
+    const accessToken = encrypt.generateToken({ id: user.id });
+    const refreshToken = encrypt.generateRefreshToken({ id: user.id });
+    console.log(refreshToken, "Refresh token");
+    return res.status(200).json({
+      meassage: "Login successfull",
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    });
   } catch (error) {
     return res.status(404).json({ message: "user signin failed" });
   }
@@ -86,7 +108,7 @@ async function searchByRestuarantOrFood(req, res) {
     const food = await foodRepository.find({
       where: { foodName: ILike(`%${query}%`) },
     });
-  
+
     if (food.length > 0) {
       return res.status(200).json({ message: "success food", Data: food });
     }
@@ -96,8 +118,40 @@ async function searchByRestuarantOrFood(req, res) {
   }
 }
 
+async function createAccessToken(req, res) {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(404).json({ message: "Refresh token not found" });
+  }
+
+  const refreshTokenRepository = dataSource.getRepository("RefreshToken");
+  const token = await refreshTokenRepository.findOne({
+    where: { id: refreshToken.id },
+  });
+
+  if (!token) {
+    return res.status(404).json({ message: "Refresh token not found" });
+  }
+
+  jwt.verify(token.token, process.env.JWT_REFRESH_SECRET, async (err, user) => {
+    if (err) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const newAccessToken = encrypt.generateToken({ id: user.id });
+    const refreshToken = encrypt.generateRefreshToken({ id: user.id });
+    token.token = refreshToken;
+    await refreshTokenRepository.save(token);
+
+    return res
+      .status(200)
+      .json({ AccessToken: newAccessToken, RefeshToken: refreshToken });
+  });
+}
+
 module.exports = {
   signUp,
   login,
   searchByRestuarantOrFood,
+  createAccessToken,
 };
