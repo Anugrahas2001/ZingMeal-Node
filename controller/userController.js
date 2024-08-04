@@ -110,7 +110,10 @@ async function searchByRestuarantOrFood(req, res) {
     });
 
     if (food.length > 0) {
-      return res.status(200).json({ message: "success food", Data: food });
+      restaurantWithFood = restaurantRepository.find({
+        where: { id: food.restaurantId },
+      });
+       return res.status(200).json({ message: "success food", Data: restaurantWithFood});
     }
     return res.status(404).json({ message: "Not found", Data: [] });
   } catch (error) {

@@ -16,4 +16,6 @@ router.get("/search/:query", searchByRestuarantOrFood);
 
 router.post("/accessToken", createAccessToken);
 
+router.get("/addToCart/:userId/:foodId", addToCart);
+
 module.exports = { userRouter: router };

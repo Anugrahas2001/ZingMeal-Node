@@ -18,6 +18,8 @@ async function createFood(req, res) {
       });
     });
     const { restaurantId } = req.params;
+    const { foodName, foodCategory, foodDescription, foodType, price } =
+      req.body;
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -31,19 +33,36 @@ async function createFood(req, res) {
     }
     const result = await cloudinary.uploader.upload(req.file.path);
 
-    const food = {
+    const foodId = {
       id: cuid(),
-      foodName: req.body.foodName,
+    };
+
+    const category = {
+      id: cuid(),
+      categoryName: foodCategory,
+      food: foodId,
+      createdBy: restaurant.restaurantName,
+      createdOn: new Date(),
+    };
+    console.log(category, "category going to save");
+
+    const categoryRepository = dataSource.getRepository("Category");
+    await categoryRepository.save(category);
+
+    const food = {
+      id: foodId,
+      foodName: foodName,
       imageFile: result.url,
-      foodDescription: req.body.foodDescription,
-      foodType: req.body.foodType,
-      foodCategory: req.body.foodCategory,
+      foodDescription: foodDescription,
+      foodType: foodType,
+      foodCategory: category.id,
       discount: 0,
-      price: req.body.price,
+      price: price,
       createdBy: restaurant.restaurantName,
       createdOn: new Date(),
       restaurant: restaurant.id,
     };
+
     const foodRepository = dataSource.getRepository("Food");
     await foodRepository.save(food);
 

@@ -1,5 +1,3 @@
-const { JoinColumn } = require("typeorm");
-
 const EntitySchema = require("typeorm").EntitySchema;
 
 const Category = new EntitySchema({
@@ -36,7 +34,10 @@ const Category = new EntitySchema({
     food: {
       target: "Food",
       type: "one-to-one",
-      JoinColumn: true,
+      JoinColumn:{
+        name:"food_id",
+        referencedColumnName: "id"
+      },
       cascade:true
     },
   },

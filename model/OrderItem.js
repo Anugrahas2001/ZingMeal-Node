@@ -1,6 +1,4 @@
-const { JoinColumn } = require("typeorm");
-
-const EntitySchema = require("typeorm").EntitySchema;
+const { EntitySchema } = require("typeorm");
 
 const OrderItem = new EntitySchema({
   name: "OrderItem",
@@ -35,14 +33,18 @@ const OrderItem = new EntitySchema({
     order: {
       target: "Order",
       type: "many-to-one",
-      JoinColumn: true,
+      joinColumn: {
+        name: "order_id",
+        referencedColumnName: "id",
+      },
     },
-  },
-  relations: {
     food: {
       target: "Food",
       type: "one-to-one",
-      JoinColumn: true,
+      joinColumn: {
+        name: "food_id",
+        referencedColumnName: "id",
+      },
     },
   },
 });

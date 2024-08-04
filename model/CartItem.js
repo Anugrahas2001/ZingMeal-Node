@@ -1,5 +1,3 @@
-const { JoinColumn } = require("typeorm");
-
 const EntitySchema = require("typeorm").EntitySchema;
 
 const CartItem = new EntitySchema({
@@ -40,14 +38,18 @@ const CartItem = new EntitySchema({
     user: {
       target: "User",
       type: "many-to-one",
-      cascade: true,
+      joinColumn:{
+        name:"user_id",
+        referencedColumnName: "id"
+      },
     },
-  },
-  relations: {
     food: {
       target: "Food",
       type: "one-to-one",
-      JoinColumn: true,
+      joinColumn:{
+        name:"food_id",
+        referencedColumnName: "id"
+      }
     },
   },
 });

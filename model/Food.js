@@ -1,21 +1,4 @@
-const { JoinColumn } = require("typeorm");
-
 var EntitySchema = require("typeorm").EntitySchema;
-// const {BaseEntity}=require("../model/BaseEntity")
-
-// class Food extends BaseEntity {
-//     constructor(foodName, foodImg, foodDescription, foodType, foodCategory, discount, price, createdBy) {
-//       super();
-//       this.foodName = foodName;
-//       this.foodImg = foodImg;
-//       this.foodDescription = foodDescription;
-//       this.foodType = foodType;
-//       this.foodCategory = foodCategory;
-//       this.discount = discount;
-//       this.price = price;
-//       this.setCreateEntity(createdBy);
-//     }
-//   }
 
 const Food = new EntitySchema({
   name: "Food",
@@ -32,17 +15,12 @@ const Food = new EntitySchema({
     },
     imageFile: {
       type: "varchar",
-      // nullable: true,
     },
     foodDescription: {
       type: "varchar",
       nullable: false,
     },
     foodType: {
-      type: "varchar",
-      nullable: false,
-    },
-    foodCategory: {
       type: "varchar",
       nullable: false,
     },
@@ -75,15 +53,28 @@ const Food = new EntitySchema({
     restaurant: {
       target: "Restaurant",
       type: "many-to-one",
-      JoinColumn: true,
-      cascade: true,
+      JoinColumn: {
+        name: "restaurant_id",
+        referencedColumnName: "id",
+      },
     },
-  },
-  relations: {
     rating: {
       target: "Rating",
       type: "one-to-one",
+      joinColumn: {
+        name: "rating_id",
+        referencedColumnName: "id",
+      },
       cascade: true,
+    },
+    category: {
+      target: "Category",
+      type: "one-to-one",
+      joinColumn: {
+        name: "category_id",
+        referencedColumnName: "id",
+      },
+      cascade: true
     },
   },
 });

@@ -36,6 +36,8 @@ async function signUp(req, res) {
       id: cuid(),
       itemId: restaurantId,
       itemRating: 1.0,
+      createdBy: restaurantName,
+      createdOn: new Date(),
     };
     const ratingRepository = dataSource.getRepository("Rating");
     const savedRating = ratingRepository.save(rating);
@@ -111,13 +113,11 @@ async function login(req, res) {
     if (!accessToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    return res
-      .status(200)
-      .json({
-        message: "Restuarent Login Successfully",
-        AccessToken: accessToken,
-        RefreshToken: refreshToken,
-      });
+    return res.status(200).json({
+      message: "Restuarent Login Successfully",
+      AccessToken: accessToken,
+      RefreshToken: refreshToken,
+    });
   } catch (error) {
     return res.status(403).json({ message: "Login failed" });
   }
