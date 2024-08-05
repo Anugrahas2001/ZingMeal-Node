@@ -19,6 +19,8 @@ async function signUp(req, res) {
       name: email.substring(0, email.indexOf("@")),
       email: email,
       password: encodedPassword,
+      createdBy: email.substring(0, email.indexOf("@")),
+      createdOn: new Date(),
     };
     console.log(user, "new user");
 
@@ -113,7 +115,9 @@ async function searchByRestuarantOrFood(req, res) {
       restaurantWithFood = restaurantRepository.find({
         where: { id: food.restaurantId },
       });
-       return res.status(200).json({ message: "success food", Data: restaurantWithFood});
+      return res
+        .status(200)
+        .json({ message: "success food", Data: restaurantWithFood });
     }
     return res.status(404).json({ message: "Not found", Data: [] });
   } catch (error) {
@@ -136,13 +140,15 @@ async function createAccessToken(req, res) {
   if (!token) {
     return res.status(404).json({ message: "Refresh token not found" });
   }
+  console.log(token, "token");
 
   jwt.verify(token.token, process.env.JWT_REFRESH_SECRET, async (err, user) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const newAccessToken = encrypt.generateToken({ id: user.id });
-    const refreshToken = encrypt.generateRefreshToken({ id: user.id });
+    
+    const newAccessToken = encrypt.generateToken({ id: token.itemId });
+    const refreshToken = encrypt.generateRefreshToken({ id: token.itemId });
     token.token = refreshToken;
     await refreshTokenRepository.save(token);
 

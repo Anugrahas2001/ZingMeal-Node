@@ -1,6 +1,8 @@
 const { dataSource } = require("../db/connection");
 const { Food } = require("../model/Food.js");
 const { Restaurant } = require("../model/Restaurant.js");
+const { Category } = require("../model/Category.js");
+const { Rating } = require("../model/Rating.js");
 const cuid = require("cuid");
 const cloudinary = require("../cloudinary/cloudinary.js");
 const upload = require("../middleware/multer.js");
@@ -18,6 +20,7 @@ async function createFood(req, res) {
       });
     });
     const { restaurantId } = req.params;
+    console.log(restaurantId, "restuarent id");
     const {
       foodName,
       foodCategory,
@@ -27,6 +30,15 @@ async function createFood(req, res) {
       discount,
       actualPrice,
     } = req.body;
+
+    console.log(
+      foodName,
+      foodCategory,
+      foodDescription,
+      foodType,
+      preparingTime,
+      actualPrice
+    );
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -40,41 +52,39 @@ async function createFood(req, res) {
     }
     const result = await cloudinary.uploader.upload(req.file.path);
 
-    const foodId = {
-      id: cuid(),
-    };
-
     const category = {
       id: cuid(),
       categoryName: foodCategory,
-      food: foodId,
       createdBy: restaurant.restaurantName,
       createdOn: new Date(),
     };
     console.log(category, "category going to save");
 
     const categoryRepository = dataSource.getRepository("Category");
+    console.log(categoryRepository, "repository");
     await categoryRepository.save(category);
 
     const rating = {
       id: cuid(),
-      itemId: restaurantId,
+      itemId: restaurant.id,
       itemRating: 1.0,
       createdBy: restaurant.restaurantName,
       createdOn: new Date(),
     };
+    console.log(rating, "rating saving");
     const ratingRepository = dataSource.getRepository("Rating");
     const savedRating = ratingRepository.save(rating);
+    console.log("rating");
 
     const food = {
-      id: foodId,
+      id: cuid(),
       foodName: foodName,
       imageFile: result.url,
       foodDescription: foodDescription,
       foodType: foodType,
       foodCategory: category.id,
       preparingTime: preparingTime,
-      discount: 0,
+      discount: discount,
       actualPrice: actualPrice,
       discountPrice:
         discount > 0 ? actualPrice - actualPrice * (discount / 100) : 0,
@@ -86,7 +96,12 @@ async function createFood(req, res) {
     const foodRepository = dataSource.getRepository("Food");
     await foodRepository.save(food);
 
-    return res.status(201).json({ message: "Food item created successfully" });
+    category.food = food.id;
+    await categoryRepository.save(category);
+
+    return res
+      .status(201)
+      .json({ message: "Food item created successfully", Data: food });
   } catch (error) {
     console.error(error);
     return res.status(403).json({ message: "Food creation failed" });

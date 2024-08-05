@@ -1,3 +1,5 @@
+const { types } = require("pg");
+
 var EntitySchema = require("typeorm").EntitySchema;
 
 const User = new EntitySchema({
@@ -36,6 +38,14 @@ const User = new EntitySchema({
     modifiedOn: {
       type: "timestamptz",
       nullable: true,
+    },
+  },
+  relations: {
+    refreshToken: {
+      target: "RefreshToken",
+      type: "one-to-one",
+      inverseSide: "refreshToken",
+      cascade: true,
     },
   },
 });

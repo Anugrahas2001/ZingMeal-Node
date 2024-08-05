@@ -29,6 +29,7 @@ async function signUp(req, res) {
     console.log(encodedPassword, "password is encoded");
 
     const result = await cloudinary.uploader.upload(req.file.path);
+    console.log(result, "result from cloudinary");
 
     const restaurantId = cuid();
 
@@ -41,6 +42,7 @@ async function signUp(req, res) {
     };
     const ratingRepository = dataSource.getRepository("Rating");
     const savedRating = ratingRepository.save(rating);
+    console.log(savedRating, "saved rating");
 
     const restaurant = {
       id: restaurantId,
@@ -92,7 +94,7 @@ async function login(req, res) {
     if (!restaurantName || !restaurantPassword) {
       return res.status(401).json({ message: "Invalid Credentials" });
     }
-    const restaurantRepository = dataSource.getRepository("Restuarent");
+    const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
       where: { restaurantName },
     });
@@ -105,10 +107,8 @@ async function login(req, res) {
       return res.status(401).json({ message: "Invalid Password" });
     }
 
-    const accessToken = encrypt.generateToken({ id: user.id });
-    console.log(accessToken, "token created");
-    const refreshToken = encrypt.generateRefreshToken({ id: user.id });
-    console.log(refreshToken, "Refresh token");
+    const accessToken = encrypt.generateToken({ id: restaurant.id });
+    const refreshToken = encrypt.generateRefreshToken({ id: restaurant.id });
 
     if (!accessToken) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -125,7 +125,7 @@ async function login(req, res) {
 async function deleteRestuarent(req, res) {
   try {
     const { id } = req.params;
-    const restaurantRepository = dataSource.getRepository("Restuarent");
+    const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
       where: { id: id },
     });
@@ -143,9 +143,10 @@ async function deleteRestuarent(req, res) {
 
 async function updateRestuarent(req, res) {
   try {
-    const { id } = req.params;
+    const { id, restaurantStatus } = req.params;
+    console.log(id, restaurantStatus, "restuarent id");
 
-    const restaurantRepository = dataSource.getRepository("Restuarent");
+    const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
       where: { id: id },
     });
@@ -154,6 +155,7 @@ async function updateRestuarent(req, res) {
         .status(404)
         .json({ message: `Restuarent with this id ${id} not found` });
     }
+    console.log(restaurant, "before update");
 
     restaurant.restaurantName = req.body.restaurantName
       ? req.body.restaurantName
@@ -162,10 +164,6 @@ async function updateRestuarent(req, res) {
     restaurant.restaurantImg = req.body.restaurantImg
       ? req.body.restaurantImg
       : restaurant.restaurantImg;
-
-    restaurant.restaurantRatings = req.body.restaurantRatings
-      ? req.body.restaurantRatings
-      : restaurant.restaurantRatings;
 
     restaurant.restaurantStatus = req.body.restaurantStatus
       ? req.body.restaurantStatus
@@ -177,11 +175,11 @@ async function updateRestuarent(req, res) {
 
     restaurant.closingTime = req.body.closingTime
       ? req.body.closingTime
-      : restuarent.closingTime;
+      : restaurant.closingTime;
 
     restaurant.modifiedBy = restaurant.restaurantName;
     restaurant.modifiedOn = new Date();
-
+    console.log(restaurant, "after update");
     await restaurantRepository.save(restaurant);
     return res.status(200).json({
       message: "Resturent successfully updated",
@@ -194,7 +192,7 @@ async function updateRestuarent(req, res) {
 
 async function getAllRestuarents(req, res) {
   try {
-    const restaurantRepository = dataSource.getRepository("Restuarent");
+    const restaurantRepository = dataSource.getRepository("Restaurant");
     const allRestaurants = await restaurantRepository.find({});
 
     return res.status(200).json({
@@ -206,10 +204,28 @@ async function getAllRestuarents(req, res) {
   }
 }
 
+async function getRestaurantById(req, res) {
+  try {
+    const { id } = req.params;
+
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: id },
+    });
+    console.log(restaurant);
+    return res
+      .status(200)
+      .json({ message: "Successfully data retrieved", Data: restaurant });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to retrieve restaurant" });
+  }
+}
+
 module.exports = {
   signUp,
   login,
   getAllRestuarents,
   updateRestuarent,
   deleteRestuarent,
+  getRestaurantById,
 };

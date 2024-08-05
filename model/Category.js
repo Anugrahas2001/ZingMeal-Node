@@ -14,31 +14,22 @@ const Category = new EntitySchema({
       nullable: false,
     },
     createdBy: {
-        type: "varchar",
-        nullable: true,
-      },
-      createdOn: {
-        type: "timestamptz",
-        nullable: true,
-      },
-      modifiedBy: {
-        type: "varchar",
-        nullable: true,
-      },
-      modifiedOn: {
-        type: "timestamptz",
-        nullable: true,
-      },
+      type: "varchar",
+      nullable: true,
+    },
+    createdOn: {
+      type: "timestamptz",
+      nullable: true,
+    },
   },
   relations: {
     food: {
       target: "Food",
       type: "one-to-one",
-      JoinColumn:{
-        name:"food_id",
-        referencedColumnName: "id"
+      joinColumn: {
+        name: "food_id",
+        referencedColumnName: "id",
       },
-      cascade:true
     },
   },
 });

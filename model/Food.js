@@ -1,5 +1,4 @@
-var EntitySchema = require("typeorm").EntitySchema;
-
+const EntitySchema = require("typeorm").EntitySchema;
 const Food = new EntitySchema({
   name: "Food",
   tableName: "foods",
@@ -24,7 +23,7 @@ const Food = new EntitySchema({
       type: "varchar",
       nullable: false,
     },
-    foodcategory: {
+    foodCategory: {
       type: "varchar",
       nullable: false,
     },
@@ -33,7 +32,7 @@ const Food = new EntitySchema({
       nullable: false,
     },
     discount: {
-      type: "varchar",
+      type: "float",
       nullable: true,
     },
     actualPrice: {
@@ -64,7 +63,7 @@ const Food = new EntitySchema({
     restaurant: {
       target: "Restaurant",
       type: "many-to-one",
-      JoinColumn: {
+      joinColumn: {
         name: "restaurant_id",
         referencedColumnName: "id",
       },
@@ -72,19 +71,11 @@ const Food = new EntitySchema({
     rating: {
       target: "Rating",
       type: "one-to-one",
-      // joinColumn: {
-      //   name: "rating_id",
-      //   referencedColumnName: "id",
-      // },
       cascade: true,
     },
     category: {
       target: "Category",
       type: "one-to-one",
-      joinColumn: {
-        name: "category_id",
-        referencedColumnName: "id",
-      },
       cascade: true,
     },
   },

@@ -6,6 +6,7 @@ const {
   deleteRestuarent,
   updateRestuarent,
   getAllRestuarents,
+  getRestaurantById,
 } = require("../controller/restuarentController.js");
 const {
   createFood,
@@ -21,6 +22,8 @@ const {
 router.post("/signUp", signUp);
 
 router.post("/login", login);
+
+router.get("/getRestaurant/:id", getRestaurantById);
 
 router.get("/allRestaurants", getAllRestuarents);
 
