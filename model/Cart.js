@@ -16,6 +16,9 @@ const Cart = new EntitySchema({
       type: "float",
       default: 0,
     },
+    deliveryTime:{
+      type: "float",
+    },
     createdBy: {
       type: "varchar",
       nullable: true,

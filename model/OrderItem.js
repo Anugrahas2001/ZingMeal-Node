@@ -11,6 +11,7 @@ const OrderItem = new EntitySchema({
     },
     quantity: {
       type: "float",
+      nullable: false,
     },
     createdBy: {
       type: "varchar",
@@ -40,7 +41,7 @@ const OrderItem = new EntitySchema({
     },
     food: {
       target: "Food",
-      type: "one-to-one",
+      type: "many-to-one",
       joinColumn: {
         name: "food_id",
         referencedColumnName: "id",

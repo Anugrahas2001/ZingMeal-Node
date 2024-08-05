@@ -16,6 +16,7 @@ async function createCart(req, res) {
     const cart = {
       id: cuid(),
       user: userId,
+      deliveryTime: 0,
       totalPrice: 0,
       createdBy: user.name,
       createdOn: new Date(),
@@ -82,4 +83,31 @@ async function calculateTotalPrice(req, res) {
   }
 }
 
-module.exports = { createCart, deleteCart, calculateTotalPrice };
+async function calculateDeliveryTime(req, res) {
+  try {
+    const { cartId } = req.params;
+    const cartRepository = dataSource.getRepository("Cart");
+    const cart = await cartRepository.findOne({
+      where: { id: cartId },
+    });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+    const totalTime = cart.cartItems.reduce((total, item) => {
+      return (total += item.food.preparingTime);
+    }, 0);
+
+    const avgPreparationTime = totalTime / cart.cartItems.length;
+    cart.deliveryTime = avgPreparationTime;
+    await cartRepository.save(cart);
+    return res
+      .status(200)
+      .json({ message: "Delivery time updated successfully" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "failed to update delivery time in cart" });
+  }
+}
+
+module.exports = { createCart, deleteCart, calculateTotalPrice ,calculateDeliveryTime};

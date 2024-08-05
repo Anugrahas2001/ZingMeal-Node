@@ -15,7 +15,10 @@ const {
   createCart,
   deleteCart,
   calculateTotalPrice,
+  calculateDeliveryTime,
 } = require("../controller/cartController.js");
+const { updateRating } = require("../controller/ratingController.js");
+const { createOrder, paymentSuccess } = require("../controller/orderController.js");
 const router = express.Router();
 
 router.post("/signUp", signUp);
@@ -32,12 +35,18 @@ router.delete("/deleteCart", deleteCart);
 
 router.patch("/totalPrice/:cartId", calculateTotalPrice);
 
+router.patch("/deliveryTime/:cartId", calculateDeliveryTime);
+
 router.get("/addToCart/:userId/:cartId/:foodId", addToCart);
 
 router.delete("/removeFromCart/:cartItemId", removeFromCart);
 
 router.patch("/updateQuantity/:itemId", updateQuantity);
 
-router.patch("/updateRating/:userId/:foodId", "updateRating");
+router.patch("/updateRating/:userId/:itemId", updateRating);
+
+router.post("/createOrder", createOrder);
+
+router.post("/payementSuccess", paymentSuccess);
 
 module.exports = { userRouter: router };

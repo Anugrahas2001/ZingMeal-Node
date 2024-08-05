@@ -26,6 +26,9 @@ const Order = new EntitySchema({
       enum: paymentStatus,
       default: paymentStatus.PENDING,
     },
+    deliveryTime:{
+      type: "float",
+    },
     paymentMethods: {
       type: "enum",
       enum: paymentMethods,
@@ -52,10 +55,23 @@ const Order = new EntitySchema({
     user: {
       target: "User",
       type: "many-to-one",
-      JoinColumn: {
+      joinColumn: {
         name: "user_id",
         referencedColumnName: "id",
       },
+    },
+    cart: {
+      target: "Cart",
+      type: "one-to-one",
+      joinColumn: {
+        name: "cart_id",
+        referencedColumnName: "id",
+      },
+    },
+    orderItems: {
+      target: "OrderItem",
+      type: "one-to-many",
+      inverseSide: "order",
     },
   },
 });
