@@ -1,17 +1,20 @@
 const EntitySchema = require("typeorm").EntitySchema;
 
-const CartItem = new EntitySchema({
-  name: "CartItem",
-  tableName: "cartItems",
+const Cart = new EntitySchema({
+  name: "Cart",
+  tableName: "cart",
   columns: {
     id: {
       primary: true,
       type: "varchar",
       length: 25,
     },
-    quantity: {
-      type: "int",
-      nullable: false,
+    totalPrice: {
+      type: "float",
+    },
+    deliveryCharge: {
+      type: "float",
+      default: 0,
     },
     createdBy: {
       type: "varchar",
@@ -31,23 +34,20 @@ const CartItem = new EntitySchema({
     },
   },
   relations: {
-    cart: {
-      target: "Cart",
-      type: "many-to-one",
+    user: {
+      target: "User",
+      type: "one-to-one",
       joinColumn: {
-        name: "cart_id",
+        name: "user_id",
         referencedColumnName: "id",
       },
     },
-    food: {
-      target: "Food",
-      type: "one-to-one",
-      joinColumn: {
-        name: "food_id",
-        referencedColumnName: "id",
-      },
+    cartItems: {
+      target: "CartItem",
+      type: "one-to-many",
+      inverseSide: "cart",
     },
   },
 });
 
-module.exports = { CartItem };
+module.exports = { Cart };

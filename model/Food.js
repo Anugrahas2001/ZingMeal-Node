@@ -24,13 +24,24 @@ const Food = new EntitySchema({
       type: "varchar",
       nullable: false,
     },
+    foodcategory: {
+      type: "varchar",
+      nullable: false,
+    },
+    preparingTime: {
+      type: "int",
+      nullable: false,
+    },
     discount: {
       type: "varchar",
       nullable: true,
     },
-    price: {
+    actualPrice: {
       type: "float",
       nullable: false,
+    },
+    discountPrice: {
+      type: "float",
     },
     createdBy: {
       type: "varchar",
@@ -61,10 +72,10 @@ const Food = new EntitySchema({
     rating: {
       target: "Rating",
       type: "one-to-one",
-      joinColumn: {
-        name: "rating_id",
-        referencedColumnName: "id",
-      },
+      // joinColumn: {
+      //   name: "rating_id",
+      //   referencedColumnName: "id",
+      // },
       cascade: true,
     },
     category: {
@@ -74,7 +85,7 @@ const Food = new EntitySchema({
         name: "category_id",
         referencedColumnName: "id",
       },
-      cascade: true
+      cascade: true,
     },
   },
 });

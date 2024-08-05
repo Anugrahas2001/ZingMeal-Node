@@ -18,8 +18,15 @@ async function createFood(req, res) {
       });
     });
     const { restaurantId } = req.params;
-    const { foodName, foodCategory, foodDescription, foodType, price } =
-      req.body;
+    const {
+      foodName,
+      foodCategory,
+      foodDescription,
+      foodType,
+      preparingTime,
+      discount,
+      actualPrice,
+    } = req.body;
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -49,6 +56,16 @@ async function createFood(req, res) {
     const categoryRepository = dataSource.getRepository("Category");
     await categoryRepository.save(category);
 
+    const rating = {
+      id: cuid(),
+      itemId: restaurantId,
+      itemRating: 1.0,
+      createdBy: restaurant.restaurantName,
+      createdOn: new Date(),
+    };
+    const ratingRepository = dataSource.getRepository("Rating");
+    const savedRating = ratingRepository.save(rating);
+
     const food = {
       id: foodId,
       foodName: foodName,
@@ -56,8 +73,11 @@ async function createFood(req, res) {
       foodDescription: foodDescription,
       foodType: foodType,
       foodCategory: category.id,
+      preparingTime: preparingTime,
       discount: 0,
-      price: price,
+      actualPrice: actualPrice,
+      discountPrice:
+        discount > 0 ? actualPrice - actualPrice * (discount / 100) : 0,
       createdBy: restaurant.restaurantName,
       createdOn: new Date(),
       restaurant: restaurant.id,
@@ -146,8 +166,15 @@ async function updateFood(req, res) {
     food.foodCategory = req.body.foodCategory
       ? req.body.foodCategory
       : food.foodCategory;
+    food.preparingTime = req.body.preparingTime
+      ? req.body.preparingTime
+      : food.preparingTime;
     food.discount = req.body.discount ? req.body.discount : food.discount;
-    food.price = req.body.price ? req.body.price : food.price;
+    food.actualPrice = req.body.actualPrice
+      ? req.body.actualPrice
+      : food.actualPrice;
+    food.discountPrice =
+      req.body.actualPrice - req.body.actualPrice * (req.body.discount / 100);
     food.modifiedBy = restaurant.restuarentName;
     food.modifiedOn = new Date();
     console.log(food, "updated food");

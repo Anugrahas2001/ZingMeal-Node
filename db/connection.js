@@ -9,6 +9,7 @@ const { Order } = require("../model/Order.js");
 const { OrderItem } = require("../model/OrderItem.js");
 const { Category } = require("../model/Category.js");
 const { CartItem } = require("../model/CartItem.js");
+const { Cart } = require("../model/Cart.js");
 dotenv.config();
 
 const { DB_PORT } = process.env;
@@ -31,6 +32,7 @@ var dataSource = new typeorm.DataSource({
     OrderItem,
     CartItem,
     Category,
+    Cart,
   ],
 });
 
