@@ -20,15 +20,15 @@ async function updateRating(req, res) {
       where: { itemId: itemId },
     });
 
-    const totalUsers=allUsers.length;
-
+    const totalUsers = allUsers.length;
+    console.log(totalUsers, "total");
     if (!item) {
-      return res
-        .status(404)
-        .json({ message: "Item not found" });
+      return res.status(404).json({ message: "Item not found" });
     }
-    item.itemRating =
-      (item.itemRating * (totalUsers - 1) + req.body.itemRating) / totalUsers;
+    console.log(item.itemRating + req.body.itemRating, "shssnn");
+    item.itemRating = (item.itemRating + req.body.itemRating) / totalUsers;
+
+    console.log(itemRating, "itemmm");
     await ratingRepository.save(item);
 
     return res

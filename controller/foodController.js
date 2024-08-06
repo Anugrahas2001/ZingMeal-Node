@@ -52,21 +52,24 @@ async function createFood(req, res) {
     }
     const result = await cloudinary.uploader.upload(req.file.path);
 
-    const category = {
-      id: cuid(),
-      categoryName: foodCategory,
-      createdBy: restaurant.restaurantName,
-      createdOn: new Date(),
-    };
-    console.log(category, "category going to save");
+    // const category = {
+    //   id: cuid(),
+    //   categoryName: foodCategory,
+    //   createdBy: restaurant.restaurantName,
+    //   createdOn: new Date(),
+    // };
+    // console.log(category, "category going to save");
 
-    const categoryRepository = dataSource.getRepository("Category");
-    console.log(categoryRepository, "repository");
-    await categoryRepository.save(category);
+    // const categoryRepository = dataSource.getRepository("Category");
+    // console.log(categoryRepository, "repository");
+    // await categoryRepository.save(category);
 
+    const foodId={
+      id:cuid()
+    }
     const rating = {
       id: cuid(),
-      itemId: restaurant.id,
+      itemId: foodId,
       itemRating: 1.0,
       createdBy: restaurant.restaurantName,
       createdOn: new Date(),
@@ -77,17 +80,17 @@ async function createFood(req, res) {
     console.log("rating");
 
     const food = {
-      id: cuid(),
+      id: foodId,
       foodName: foodName,
       imageFile: result.url,
       foodDescription: foodDescription,
       foodType: foodType,
-      foodCategory: category.id,
+      foodCategory: foodCategory,
       preparingTime: preparingTime,
       discount: discount,
       actualPrice: actualPrice,
       discountPrice:
-        discount > 0 ? actualPrice - actualPrice * (discount / 100) : 0,
+        discount > 0 ? actualPrice - actualPrice * (discount / 100) : actualPrice,
       createdBy: restaurant.restaurantName,
       createdOn: new Date(),
       restaurant: restaurant.id,
@@ -96,8 +99,8 @@ async function createFood(req, res) {
     const foodRepository = dataSource.getRepository("Food");
     await foodRepository.save(food);
 
-    category.food = food.id;
-    await categoryRepository.save(category);
+    // category.food = food.id;
+    // await categoryRepository.save(category);
 
     return res
       .status(201)
@@ -158,7 +161,7 @@ async function updateFood(req, res) {
         .status(404)
         .json({ message: `Restuarent not found with this id ${restaurantId}` });
     }
-    console.log(restaurant, "to update");
+    console.log(restaurant.restaurantName, "to update");
 
     console.log(foodId, "foodId");
     const foodRepository = dataSource.getRepository("Food");
@@ -188,9 +191,11 @@ async function updateFood(req, res) {
     food.actualPrice = req.body.actualPrice
       ? req.body.actualPrice
       : food.actualPrice;
-    food.discountPrice =
-      req.body.actualPrice - req.body.actualPrice * (req.body.discount / 100);
-    food.modifiedBy = restaurant.restuarentName;
+    if (req.body.discount > 0 && food.actualPrice) {
+      food.discountPrice =
+        food.actualPrice - food.actualPrice * (req.body.discount / 100);
+    }
+    food.modifiedBy = restaurant.restaurantName;
     food.modifiedOn = new Date();
     console.log(food, "updated food");
     await foodRepository.save(food);
@@ -205,20 +210,23 @@ async function updateFood(req, res) {
 
 async function deleteFood(req, res) {
   try {
-    const { id } = req.params.id;
+    const { foodId } = req.params;
+    console.log(foodId, "iddd");
 
     const foodRepository = dataSource.getRepository("Food");
     const food = await foodRepository.findOne({
-      where: { id: id },
+      where: { id: foodId },
     });
+    console.log(food, "foooddd");
 
     if (!food) {
       return res
         .status(404)
-        .json({ message: `food item not found with this id ${id}` });
+        .json({ message: `food item not found with this id ${foodId}` });
     }
 
-    await foodRepository.remove(food);
+    await foodRepository.delete(food);
+    console.log("deleted");
     return res.status(200).json({ message: "Food item deleted successfully" });
   } catch (error) {
     return res.status(204).json({ message: "Failed to delete food item" });
@@ -255,12 +263,16 @@ async function getAllFoodsBasedOnRestaurant(req, res) {
 
 async function getFoodsBasedOnType(req, res) {
   try {
-    const { type } = req.params;
+    const { foodType } = req.params;
 
     const foodRepository = dataSource.getRepository("Food");
     const foods = await foodRepository.find({
-      where: { foodType: type },
+      where: { foodType: foodType },
     });
+
+    if (foods.length === 0) {
+      return res.status(404).json({ message: "Item not found" });
+    }
 
     return res
       .status(200)
@@ -273,12 +285,15 @@ async function getFoodsBasedOnType(req, res) {
 async function getAllFoodsBasedOnCategory(req, res) {
   try {
     const { category } = req.params;
+    console.log(category, "ddgdj");
 
     const foodRepository = dataSource.getRepository("Food");
     const allFoods = await foodRepository.find({
       where: { foodCategory: category },
     });
-    console.log(allFoods, "all foods");
+    if (allFoods.length == 0) {
+      return res.status(404).json({ message: "Item not found" });
+    }
 
     return res.status(200).json({
       message: "Successfull retrieved all food items based on category",

@@ -73,11 +73,11 @@ const Food = new EntitySchema({
       type: "one-to-one",
       cascade: true,
     },
-    category: {
-      target: "Category",
-      type: "one-to-one",
-      cascade: true,
-    },
+    // category: {
+    //   target: "Category",
+    //   type: "one-to-one",
+    //   cascade: true,
+    // },
   },
 });
 

@@ -14,8 +14,6 @@ const {
 const {
   createCart,
   deleteCart,
-  calculateTotalPrice,
-  calculateDeliveryTime,
 } = require("../controller/cartController.js");
 const { updateRating } = require("../controller/ratingController.js");
 const { createOrder, paymentSuccess } = require("../controller/orderController.js");
@@ -31,17 +29,13 @@ router.post("/accessToken", createAccessToken);
 
 router.post("/createCart/:userId", createCart);
 
-router.delete("/deleteCart", deleteCart);
+router.delete("/deleteCart/:cartId", deleteCart);
 
-router.patch("/totalPrice/:cartId", calculateTotalPrice);
-
-router.patch("/deliveryTime/:cartId", calculateDeliveryTime);
-
-router.get("/addToCart/:userId/:cartId/:foodId", addToCart);
+router.post("/addToCart/:userId/:cartId/:foodId", addToCart);
 
 router.delete("/removeFromCart/:cartItemId", removeFromCart);
 
-router.patch("/updateQuantity/:itemId", updateQuantity);
+router.patch("/updateQuantity/:userId/:itemId", updateQuantity);
 
 router.patch("/updateRating/:userId/:itemId", updateRating);
 

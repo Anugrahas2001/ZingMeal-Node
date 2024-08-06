@@ -1,10 +1,14 @@
 const cuid = require("cuid");
 const { dataSource } = require("../db/connection");
+const { Cart } = require("../model/Cart.js");
+const { CartItem } = require("../model/CartItem.js");
+const { Food } = require("../model/Food.js");
+const { User } = require("../model/User.js");
 
 async function addToCart(req, res) {
   try {
     const { userId, cartId, foodId } = req.params;
-    console.log(foodId,cartId,userId, "food id");
+    console.log(foodId, cartId, userId, "food id");
 
     const userRepository = dataSource.getRepository("User");
     const user = await userRepository.findOne({
@@ -13,7 +17,7 @@ async function addToCart(req, res) {
     if (!user) {
       return res.status(200).json({ message: "User not found" });
     }
-
+    console.log(user, "user");
     const cartRepository = dataSource.getRepository("Cart");
     const cart = await cartRepository.findOne({
       where: { id: cartId },
@@ -23,26 +27,32 @@ async function addToCart(req, res) {
         .status(404)
         .json({ message: `Cart with this id ${cartId} is not present.` });
     }
+    console.log(cart, "cart");
 
     const cartItemRepository = dataSource.getRepository("CartItem");
     const cartItem = await cartItemRepository.findOne({
-      where: { user: cartId, food: foodId },
+      where: { cart: { id: cartId }, food: { id: foodId } },
     });
+    console.log(cartItem, "item");
 
     if (cartItem) {
       cartItem.quantity += 1;
-    } else {
-      const cartItem = {
-        id: cuid(),
-        quantity: 1,
-        cart: cartId,
-        food: foodId,
-        createdBy: user.name,
-        createdOn: new Date(),
-      };
+      await cartItemRepository.save(cartItem);
+      return res
+        .status(200)
+        .json({ message: "Item successfully added to the cart", Data: cart });
     }
-
-    await cartRepository.save(cartItem);
+    console.log("cartItem not found");
+    const cartItems = {
+      id: cuid(),
+      quantity: 1,
+      cart: cartId,
+      food: foodId,
+      createdBy: user.name,
+      createdOn: new Date(),
+    };
+    console.log("success");
+    await cartItemRepository.save(cartItems);
     return res
       .status(200)
       .json({ message: "Item successfully added to the cart", Data: cart });
@@ -53,12 +63,14 @@ async function addToCart(req, res) {
 
 async function removeFromCart(req, res) {
   try {
-    const { id } = req.params;
+    const { cartItemId } = req.params;
+    console.log(cartItemId, "cartt item id");
 
     const cartItemRepository = dataSource.getRepository("CartItem");
-    const cartItem = cartItemRepository.findOne({
-      where: { id: id },
+    const cartItem = await cartItemRepository.findOne({
+      where: { id: cartItemId },
     });
+    console.log(cartItem, "cart item remove");
     cartItemRepository.remove(cartItem);
     return res.status(200).json({ message: "Cart Item removed successfully" });
   } catch (error) {
@@ -68,10 +80,19 @@ async function removeFromCart(req, res) {
 
 async function updateQuantity(req, res) {
   try {
-    const { itemId } = req.params;
+    const { userId, itemId } = req.params;
+    const { quantity } = req.body;
 
     if (quantity <= 0) {
       return res.status(400).json({ message: "Quantity should be > 0" });
+    }
+
+    const userRepository = dataSource.getRepository("User");
+    const user = await userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
     const cartItemRepository = dataSource.getRepository("CartItem");
@@ -82,7 +103,9 @@ async function updateQuantity(req, res) {
     if (!cartItem) {
       return res.status(404).json({ message: "Cart item is not found" });
     }
-    cartItem.quantity ? quantity : cartItem.quantity;
+    cartItem.quantity = quantity ? quantity : cartItem.quantity;
+    cartItem.modifiedBy = user.name;
+    cartItem.modifiedOn = new Date();
     await cartItemRepository.save(cartItem);
     return res
       .status(200)

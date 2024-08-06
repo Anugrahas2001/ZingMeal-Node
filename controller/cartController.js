@@ -53,7 +53,16 @@ async function deleteCart(req, res) {
 
 async function calculateTotalPrice(req, res) {
   try {
-    const { cartId } = req.params;
+    const { restuarentId, cartId } = req.params;
+    console.log(cartId, "cart id");
+
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: restuarentId },
+    });
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
 
     const cartRepository = dataSource.getRepository("Cart");
     const cart = await cartRepository.findOne({
@@ -62,18 +71,21 @@ async function calculateTotalPrice(req, res) {
     if (!cart) {
       return res.status(404).json({ message: "Cart is not found" });
     }
-    const allCartItems = await cartRepository.find();
-    for (const cartItem of allCartItems) {
-      const food = await foodRepository.findOne({
-        where: { id: cartItem.food.id },
-      });
-      if (food) {
-        totalPrice += cartItem.quantity * food.price - discountPrice;
-      }
-      totalPrice += deliveryCharge;
-    }
-    cart.totalPrice = totalPrice;
+    console.log(cart, "cart");
+    const cartItemRepository = dataSource.getRepository("CartItem");
+    const allCartItems = await cartItemRepository.find({
+      where: { cart: { id: cartId } },
+      relations: ["cart", "food"],
+    });
+    console.log(allCartItems, "items");
+    const totalAmount = allCartItems.reduce((total, item) => {
+      const itemTotalPrice = item.quantity * item.food.discountPrice;
+      return total + itemTotalPrice;
+    }, 0);
+
+    cart.totalPrice = totalAmount + cart.deliveryCharge;
     await cartRepository.save(cart);
+    console.log("success");
 
     return res
       .status(200)
@@ -85,7 +97,15 @@ async function calculateTotalPrice(req, res) {
 
 async function calculateDeliveryTime(req, res) {
   try {
-    const { cartId } = req.params;
+    const { restuarentId, cartId } = req.params;
+    console.log(cartId, "id");
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: restuarentId },
+    });
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
     const cartRepository = dataSource.getRepository("Cart");
     const cart = await cartRepository.findOne({
       where: { id: cartId },
@@ -93,12 +113,18 @@ async function calculateDeliveryTime(req, res) {
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
     }
-    const totalTime = cart.cartItems.reduce((total, item) => {
+    console.log(cart, "cart");
+    const cartItemRepository = dataSource.getRepository("CartItem");
+    const allCartItems = await cartItemRepository.find({
+      where: { cart: { id: cartId } },
+      relations: ["cart", "food"],
+    });
+    const totalTime = allCartItems.reduce((total, item) => {
       return (total += item.food.preparingTime);
     }, 0);
 
-    const avgPreparationTime = totalTime / cart.cartItems.length;
-    cart.deliveryTime = avgPreparationTime;
+    const avgPreparationTime = totalTime / allCartItems.length;
+    cart.deliveryTime = avgPreparationTime + 30;
     await cartRepository.save(cart);
     return res
       .status(200)
@@ -110,4 +136,9 @@ async function calculateDeliveryTime(req, res) {
   }
 }
 
-module.exports = { createCart, deleteCart, calculateTotalPrice ,calculateDeliveryTime};
+module.exports = {
+  createCart,
+  deleteCart,
+  calculateTotalPrice,
+  calculateDeliveryTime,
+};

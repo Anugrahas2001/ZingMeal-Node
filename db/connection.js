@@ -7,7 +7,7 @@ const { Food } = require("../model/Food.js");
 const { Rating } = require("../model/Rating.js");
 const { Order } = require("../model/Order.js");
 const { OrderItem } = require("../model/OrderItem.js");
-const { Category } = require("../model/Category.js");
+// const { Category } = require("../model/Category.js");
 const { CartItem } = require("../model/CartItem.js");
 const { Cart } = require("../model/Cart.js");
 dotenv.config();
@@ -31,7 +31,6 @@ var dataSource = new typeorm.DataSource({
     Order,
     OrderItem,
     CartItem,
-    Category,
     Cart,
   ],
 });

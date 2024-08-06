@@ -1,7 +1,9 @@
 const { dataSource } = require("../db/connection.js");
 const { orderStatus } = require("../enum/OrderStatus.js");
 const { paymentStatus } = require("../enum/paymentStatus.js");
-const instance = require("../payment/instance.js");
+const dotenv = require("dotenv");
+const Razorpay = require("razorpay");
+dotenv.config();
 
 async function createOrder(req, res) {
   var options = {
@@ -10,6 +12,12 @@ async function createOrder(req, res) {
     receipt: "order_rcptid_11",
     payment_capture: 1,
   };
+  // order_OhYy2d2CBRWMM3 ---id
+
+  const instance = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID, 
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
 
   try {
     instance.orders.create(options, function (err, order) {
