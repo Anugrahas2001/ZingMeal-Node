@@ -29,22 +29,22 @@ router.get("/search/:query", searchByRestuarantOrFood);
 
 router.post("/accessToken", createAccessToken);
 
-router.post("/createCart/:userId", createCart);
+router.post("/createCart/:userId", authentication, createCart);
 
-router.delete("/deleteCart/:cartId", deleteCart);
+router.delete("/deleteCart/:cartId", authentication, deleteCart);
 
-router.post("/addToCart/:userId/:cartId/:foodId", addToCart);
+router.post("/addToCart/:userId/:cartId/:foodId", authentication, addToCart);
 
-router.delete("/removeFromCart/:cartItemId", removeFromCart);
+router.delete("/removeFromCart/:cartItemId", authentication, removeFromCart);
 
-router.patch("/updateQuantity/:userId/:itemId", updateQuantity);
+router.patch("/updateQuantity/:userId/:itemId", authentication, updateQuantity);
 
-router.patch("/updateRating/:userId/:itemId", updateRating);
+router.patch("/updateRating/:userId/:itemId", authentication, updateRating);
 
 router.post("/createOrder", createOrder);
 
-router.post("/paymentSuccess/:userId/:cartId", paymentSuccess);
+router.post("/paymentSuccess/:userId/:cartId", authentication, paymentSuccess);
 
-router.delete("/cancelOrder/:orderId", cancelOrder);
+router.delete("/cancelOrder/:orderId", authentication, cancelOrder);
 
 module.exports = { userRouter: router };
