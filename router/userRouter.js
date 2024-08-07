@@ -16,8 +16,8 @@ const { updateRating } = require("../controller/ratingController.js");
 const {
   createOrder,
   paymentSuccess,
+  cancelOrder,
 } = require("../controller/orderController.js");
-
 
 const router = express.Router();
 
@@ -43,8 +43,8 @@ router.patch("/updateRating/:userId/:itemId", updateRating);
 
 router.post("/createOrder", createOrder);
 
-router.post('/paymentSuccess/:userId/:cartId', paymentSuccess);
+router.post("/paymentSuccess/:userId/:cartId", paymentSuccess);
 
-router.delete("/cancelOrder/:userId/:orderId",cancelOrder);
+router.delete("/cancelOrder/:orderId", cancelOrder);
 
 module.exports = { userRouter: router };

@@ -22,7 +22,11 @@ const {
   calculateTotalPrice,
   calculateDeliveryTime,
 } = require("../controller/cartController.js");
-const { updateOrderStatus } = require("../controller/orderController.js");
+const {
+  updateOrderStatus,
+  filterBasedOnStatus,
+  cancelAndDelivered,
+} = require("../controller/orderController.js");
 
 router.post("/signUp", signUp);
 
@@ -60,5 +64,9 @@ router.patch("/totalPrice/:restuarentId/:cartId", calculateTotalPrice);
 router.patch("/deliveryTime/:restuarentId/:cartId", calculateDeliveryTime);
 
 router.patch("/updateOrderStatus/:restaurantId/:orderId", updateOrderStatus);
+
+router.get("/filterPending", filterBasedOnStatus);
+
+router.get("/cancelAndDelivered", cancelAndDelivered);
 
 module.exports = { restuarentRouter: router };

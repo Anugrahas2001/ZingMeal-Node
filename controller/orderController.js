@@ -2,6 +2,7 @@ const cuid = require("cuid");
 const { dataSource } = require("../db/connection.js");
 const { orderStatus } = require("../enum/OrderStatus.js");
 const { paymentStatus } = require("../enum/paymentStatus.js");
+const { formatInTimeZone } = require("date-fns-tz");
 const { Payment } = require("../model/Payment.js");
 const dotenv = require("dotenv");
 const Razorpay = require("razorpay");
@@ -155,7 +156,6 @@ async function updateOrderStatus(req, res) {
     return res
       .status(200)
       .json({ message: "Successfully updated order status" });
-      
   } catch (error) {
     return res
       .status(500)
@@ -163,4 +163,122 @@ async function updateOrderStatus(req, res) {
   }
 }
 
-module.exports = { createOrder, paymentSuccess, updateOrderStatus };
+async function cancelOrder(req, res) {
+  try {
+    const { orderId } = req.params;
+    console.log(orderId, "order id");
+
+    const orderRepository = dataSource.getRepository("Order");
+    const order = await orderRepository.findOne({
+      where: { id: orderId },
+    });
+
+    console.log(order, "orderrr");
+
+    const orderItemRepository = dataSource.getRepository("OrderItem");
+    const allOrderItem = await orderItemRepository.find({
+      where: { order: { id: orderId } },
+    });
+
+    console.log(allOrderItem, "allOrders");
+
+    const paymentRepository = dataSource.getRepository("Payment");
+    const payment = await paymentRepository.findOne({
+      where: { order: { id: orderId } },
+    });
+    console.log(payment, "payment");
+    const currentTime = new Date().getTime();
+    const createdTime = order.createdOn.getTime();
+    console.log(currentTime, "current time", createdTime, "created on");
+    const timeDifferenceinMs = currentTime - createdTime;
+    console.log(timeDifferenceinMs, "time difference");
+
+    const timeDifferenceinHr = timeDifferenceinMs / (1000 * 60 * 60);
+    console.log(timeDifferenceinHr, "in hours");
+
+    if (timeDifferenceinHr <24) {
+      console.log("deleting");
+      await Promise.all(
+        allOrderItem.map((item) => orderItemRepository.remove(item))
+      );
+      console.log("orderitem deleted");
+      await paymentRepository.remove(payment);
+      console.log("payment deleted");
+      await orderRepository.remove(order);
+      console.log("deleted");
+      return res.status(200).json({ message: "Order cancelled successfully" });
+    }
+    console.log("item cancelled");
+    return res.status(400).json({ message: "Can't cancel this order" });
+  } catch (error) {
+    return res.status(500).json({ message: "Can't cancel this order" });
+  }
+}
+
+async function filterBasedOnStatus(req, res) {
+  try {
+    const orderRepository = dataSource.getRepository("Order");
+    const allOrders = await orderRepository.find();
+    console.log(allOrders, "all orders");
+
+    const pendingOrders = allOrders.sort((order1, order2) => {
+      if (
+        order1.status === orderStatus.PENDING &&
+        order2.status != orderStatus.PENDING
+      ) {
+        return -1;
+      }
+      if (
+        order1.status != orderStatus.PENDING &&
+        order2.status === orderStatus.PENDING
+      ) {
+        return 1;
+      }
+      return 0;
+    });
+    console.log(pendingOrders, "pending orders");
+    return res
+      .status(200)
+      .json({ message: "Orders sorted based on status", Data: pendingOrders });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to sort orders" });
+  }
+}
+
+async function cancelAndDelivered(req, res) {
+  try {
+    const orderRepository = dataSource.getRepository("Order");
+    const allcancelledAndDeliveredOrdes = await orderRepository.find({
+      where: [
+        { orderStatus: orderStatus.CANCELLED },
+        { orderStatus: orderStatus.DELIVERED },
+      ],
+      order: {
+        createdOn: "DESC",
+      },
+    });
+    console.log(allcancelledAndDeliveredOrdes,"all orders")
+
+  
+    allcancelledAndDeliveredOrdes.map((order) => {
+      const formattedTime = formatInTimeZone(order.createdOn, 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ssXXX');
+      console.log(order.id, formattedTime, "time");
+    });
+    console.log(allcancelledAndDeliveredOrdes, "alll");
+    return res.status(200).json({
+      message: "successfully sorted bsed on created time",
+      Data: allcancelledAndDeliveredOrdes,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to sort order" });
+  }
+}
+
+module.exports = {
+  createOrder,
+  paymentSuccess,
+  updateOrderStatus,
+  cancelOrder,
+  filterBasedOnStatus,
+  cancelAndDelivered,
+};
