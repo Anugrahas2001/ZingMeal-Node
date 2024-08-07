@@ -11,12 +11,14 @@ const {
   updateQuantity,
   removeFromCart,
 } = require("../controller/cartItemController.js");
-const {
-  createCart,
-  deleteCart,
-} = require("../controller/cartController.js");
+const { createCart, deleteCart } = require("../controller/cartController.js");
 const { updateRating } = require("../controller/ratingController.js");
-const { createOrder, paymentSuccess } = require("../controller/orderController.js");
+const {
+  createOrder,
+  paymentSuccess,
+} = require("../controller/orderController.js");
+
+
 const router = express.Router();
 
 router.post("/signUp", signUp);
@@ -41,6 +43,8 @@ router.patch("/updateRating/:userId/:itemId", updateRating);
 
 router.post("/createOrder", createOrder);
 
-router.post("/payementSuccess", paymentSuccess);
+router.post('/paymentSuccess/:userId/:cartId', paymentSuccess);
+
+router.delete("/cancelOrder/:userId/:orderId",cancelOrder);
 
 module.exports = { userRouter: router };

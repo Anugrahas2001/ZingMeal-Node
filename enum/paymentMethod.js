@@ -1,7 +1,10 @@
+
 const paymentMethods = Object.freeze({
-  CASH_ON_DELIVERY: "Cash On Delivery",
-  UPI: "upi",
-  CREDIT_CARD: "CreditCard",
+  CREDIT_CARD: "credit Cart",
+  DEBIT_CARD: "Debit Cart",
+  NET_BANKING: "Net Banking",
+  UPI: "UPI",
+  WALLET: "WALLET",
 });
 
 module.exports = { paymentMethods };

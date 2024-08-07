@@ -32,7 +32,6 @@ const Order = new EntitySchema({
     paymentMethods: {
       type: "enum",
       enum: paymentMethods,
-      default: paymentMethods.CASH_ON_DELIVERY,
     },
     createdBy: {
       type: "varchar",
@@ -62,7 +61,7 @@ const Order = new EntitySchema({
     },
     cart: {
       target: "Cart",
-      type: "one-to-one",
+      type: "many-to-one",
       joinColumn: {
         name: "cart_id",
         referencedColumnName: "id",
