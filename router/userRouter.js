@@ -22,28 +22,39 @@ const {
 const router = express.Router();
 
 router.post("/signUp", signUp);
+//yes
 
 router.post("/login", login);
+//yes
 
 router.get("/search/:query", searchByRestuarantOrFood);
+//no
 
 router.post("/accessToken", createAccessToken);
+//yes
 
 router.post("/createCart/:userId", authentication, createCart);
+//yes
 
 router.delete("/deleteCart/:cartId", authentication, deleteCart);
+//yes
 
 router.post("/addToCart/:userId/:cartId/:foodId", authentication, addToCart);
+//yes
 
 router.delete("/removeFromCart/:cartItemId", authentication, removeFromCart);
+//yes
 
 router.patch("/updateQuantity/:userId/:itemId", authentication, updateQuantity);
-
-router.patch("/updateRating/:userId/:itemId", authentication, updateRating);
+//yes
 
 router.post("/createOrder", createOrder);
+//yes
 
 router.post("/paymentSuccess/:userId/:cartId", authentication, paymentSuccess);
+//yes
+
+router.patch("/updateRating/:userId/:itemId", authentication, updateRating);
 
 router.delete("/cancelOrder/:orderId", authentication, cancelOrder);
 

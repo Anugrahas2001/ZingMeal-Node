@@ -26,10 +26,8 @@ async function signUp(req, res) {
       closingTime,
     } = req.body;
     const encodedPassword = await encrypt.encryptPass(restaurantPassword);
-    console.log(encodedPassword, "password is encoded");
-
+  
     const result = await cloudinary.uploader.upload(req.file.path);
-    console.log(result, "result from cloudinary");
 
     const restaurantId = cuid();
 
@@ -41,8 +39,7 @@ async function signUp(req, res) {
       createdOn: new Date(),
     };
     const ratingRepository = dataSource.getRepository("Rating");
-    const savedRating = ratingRepository.save(rating);
-    console.log(savedRating, "saved rating");
+    const savedRating =await ratingRepository.save(rating);
 
     const restaurant = {
       id: restaurantId,
@@ -56,18 +53,12 @@ async function signUp(req, res) {
       createdOn: new Date(),
       createdBy: restaurantName,
     };
-    console.log(restaurant, "restuarent saved");
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
-    restaurantRepository.save(restaurant);
-
-    console.log("going to genarate token");
-
-    // const token = encrypt.generateToken({ id: restaurant.id });
+    await restaurantRepository.save(restaurant);
 
     const accessToken = encrypt.generateToken({ id: restaurant.id });
     const refreshToken = encrypt.generateRefreshToken({ id: restaurant.id });
-    console.log(accessToken, "access", refreshToken, "refresh token created");
 
     const tokenRepository = dataSource.getRepository("RefreshToken");
     const token = {
@@ -125,6 +116,7 @@ async function login(req, res) {
 async function deleteRestuarent(req, res) {
   try {
     const { id } = req.params;
+
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
       where: { id: id },
@@ -134,6 +126,7 @@ async function deleteRestuarent(req, res) {
         .status(404)
         .json({ message: `Restuarent not found with this id ${id}` });
     }
+
     await restaurantRepository.remove(restaurant);
     return res.status(200).json({ message: "Restuarent succesffully deleted" });
   } catch (error) {

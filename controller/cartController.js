@@ -83,7 +83,7 @@ async function calculateTotalPrice(req, res) {
       return total + itemTotalPrice;
     }, 0);
 
-    cart.totalPrice = totalAmount + cart.deliveryCharge;
+    cart.totalPrice = Number((totalAmount + cart.deliveryCharge).toFixed(1));
     await cartRepository.save(cart);
     console.log("success");
 
@@ -124,15 +124,52 @@ async function calculateDeliveryTime(req, res) {
     }, 0);
 
     const avgPreparationTime = totalTime / allCartItems.length;
-    cart.deliveryTime = avgPreparationTime + 30;
+    cart.deliveryTime = Math.round(avgPreparationTime + 30);
     await cartRepository.save(cart);
     return res
       .status(200)
-      .json({ message: "Delivery time updated successfully" });
+      .json({ message: "Delivery time updated successfully", Data: cart });
   } catch (error) {
     return res
       .status(500)
       .json({ message: "failed to update delivery time in cart" });
+  }
+}
+
+async function updateDeliveryCharge(req, res) {
+  try {
+    const { restuarentId, cartId } = req.params;
+    const { deliveryCharge } = req.body;
+    console.log(restuarentId, cartId);
+
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: restuarentId },
+    });
+
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    const cartRepository = dataSource.getRepository("Cart");
+    const cart = await cartRepository.findOne({
+      where: { id: cartId },
+    });
+
+    cart.deliveryCharge = deliveryCharge ? deliveryCharge : cart.deliveryCharge;
+    cart.modifiedBy = restaurant.restaurantName;
+    cart.modifiedOn = new Date();
+
+    console.log(cart, "cart data");
+    await cartRepository.save(cart);
+
+    return res
+      .status(200)
+      .json({ message: "cart item updated successfully", Data: cart });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "failed to update delivery charge" });
   }
 }
 
@@ -141,4 +178,5 @@ module.exports = {
   deleteCart,
   calculateTotalPrice,
   calculateDeliveryTime,
+  updateDeliveryCharge
 };

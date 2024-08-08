@@ -20,7 +20,7 @@ async function createFood(req, res) {
       });
     });
     const { restaurantId } = req.params;
-    console.log(restaurantId, "restuarent id");
+
     const {
       foodName,
       foodCategory,
@@ -52,23 +52,22 @@ async function createFood(req, res) {
     }
     const result = await cloudinary.uploader.upload(req.file.path);
 
-    const foodId={
-      id:cuid()
-    }
+    const foodId = {
+      id: cuid(),
+    };
     const rating = {
       id: cuid(),
-      itemId: foodId,
+      itemId: foodId.id,
       itemRating: 1.0,
       createdBy: restaurant.restaurantName,
       createdOn: new Date(),
     };
-    console.log(rating, "rating saving");
+
     const ratingRepository = dataSource.getRepository("Rating");
     const savedRating = ratingRepository.save(rating);
-    console.log("rating");
 
     const food = {
-      id: foodId,
+      id: foodId.id,
       foodName: foodName,
       imageFile: result.url,
       foodDescription: foodDescription,
@@ -78,7 +77,9 @@ async function createFood(req, res) {
       discount: discount,
       actualPrice: actualPrice,
       discountPrice:
-        discount > 0 ? actualPrice - actualPrice * (discount / 100) : actualPrice,
+        discount > 0
+          ? actualPrice - actualPrice * (discount / 100)
+          : actualPrice,
       createdBy: restaurant.restaurantName,
       createdOn: new Date(),
       restaurant: restaurant.id,
@@ -210,7 +211,7 @@ async function deleteFood(req, res) {
         .json({ message: `food item not found with this id ${foodId}` });
     }
 
-    await foodRepository.delete(food);
+    await foodRepository.remove(food);
     console.log("deleted");
     return res.status(200).json({ message: "Food item deleted successfully" });
   } catch (error) {
@@ -221,6 +222,7 @@ async function deleteFood(req, res) {
 async function getAllFoodsBasedOnRestaurant(req, res) {
   try {
     const { restaurantId } = req.params;
+    console.log(restaurantId, "id of restaurant");
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -233,9 +235,10 @@ async function getAllFoodsBasedOnRestaurant(req, res) {
         .json({ message: `Restuarent not found with this is ${restaurantId}` });
     }
     const foodRepository = dataSource.getRepository("Food");
-    const allFoods = await foodRepository.findBy({
-      restaurant: { id: restaurantId },
+    const allFoods = await foodRepository.find({
+      where: { restaurant: { id: restaurantId } },
     });
+    console.log(allFoods);
 
     return res.status(200).json({
       message: "Successfully retrieved the food items",

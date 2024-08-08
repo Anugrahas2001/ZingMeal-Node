@@ -12,7 +12,6 @@ async function signUp(req, res) {
   try {
     const { email, password } = req.body;
     const encodedPassword = await encrypt.encryptPass(password);
-    console.log(encodedPassword, "password is encoded");
 
     const user = {
       id: cuid(),
@@ -22,15 +21,12 @@ async function signUp(req, res) {
       createdBy: email.substring(0, email.indexOf("@")),
       createdOn: new Date(),
     };
-    console.log(user, "new user");
 
     var userRepository = dataSource.getRepository("User");
     userRepository.save(user);
 
     const accessToken = encrypt.generateToken({ id: user.id });
-    console.log(accessToken, "token created");
     const refreshToken = encrypt.generateRefreshToken({ id: user.id });
-    console.log(refreshToken, "Refresh token");
 
     const tokenRepository = dataSource.getRepository("RefreshToken");
     const token = {
@@ -62,9 +58,7 @@ async function login(req, res) {
     const user = await userRepository.findOne({
       where: { email },
     });
-    console.log(user, "from databse");
 
-    console.log(user.password, "password from database");
     if (!user) {
       return res
         .status(401)
@@ -81,7 +75,6 @@ async function login(req, res) {
 
     const accessToken = encrypt.generateToken({ id: user.id });
     const refreshToken = encrypt.generateRefreshToken({ id: user.id });
-    console.log(refreshToken, "Refresh token");
     return res.status(200).json({
       meassage: "Login successfull",
       accessToken: accessToken,
@@ -95,11 +88,13 @@ async function login(req, res) {
 async function searchByRestuarantOrFood(req, res) {
   try {
     const { query } = req.params;
+    console.log(query,"text")
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.find({
       where: { restaurantName: ILike(`%${query}%`) },
     });
+    console.log(restaurant, "all foods");
 
     if (restaurant.length > 0) {
       return res
@@ -110,11 +105,13 @@ async function searchByRestuarantOrFood(req, res) {
     const food = await foodRepository.find({
       where: { foodName: ILike(`%${query}%`) },
     });
+    console.log(food, "foods");
 
     if (food.length > 0) {
-      restaurantWithFood = restaurantRepository.find({
+      restaurantWithFood =await restaurantRepository.find({
         where: { id: food.restaurantId },
       });
+      console.log(restaurantWithFood, "with food");
       return res
         .status(200)
         .json({ message: "success food", Data: restaurantWithFood });
@@ -146,7 +143,7 @@ async function createAccessToken(req, res) {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    
+
     const newAccessToken = encrypt.generateToken({ id: token.itemId });
     const refreshToken = encrypt.generateRefreshToken({ id: token.itemId });
     token.token = refreshToken;

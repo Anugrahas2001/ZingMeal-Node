@@ -40,7 +40,7 @@ async function addToCart(req, res) {
       await cartItemRepository.save(cartItem);
       return res
         .status(200)
-        .json({ message: "Item successfully added to the cart", Data: cart });
+        .json({ message: "Item successfully added to the cart", Data: cartItem });
     }
     console.log("cartItem not found");
     const cartItems = {
