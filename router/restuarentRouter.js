@@ -26,6 +26,7 @@ const {
   updateOrderStatus,
   filterBasedOnStatus,
   cancelAndDelivered,
+  ordersInRestaurant,
 } = require("../controller/orderController.js");
 
 router.post("/signUp", signUp);
@@ -68,5 +69,7 @@ router.patch("/updateOrderStatus/:restaurantId/:orderId", updateOrderStatus);
 router.get("/filterPending", filterBasedOnStatus);
 
 router.get("/cancelAndDelivered", cancelAndDelivered);
+
+router.get("/allOrdersInRestaurant/:restaurantId", ordersInRestaurant);
 
 module.exports = { restuarentRouter: router };

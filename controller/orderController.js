@@ -196,7 +196,7 @@ async function cancelOrder(req, res) {
     const timeDifferenceinHr = timeDifferenceinMs / (1000 * 60 * 60);
     console.log(timeDifferenceinHr, "in hours");
 
-    if (timeDifferenceinHr <24) {
+    if (timeDifferenceinHr < 24) {
       console.log("deleting");
       await Promise.all(
         allOrderItem.map((item) => orderItemRepository.remove(item))
@@ -257,11 +257,14 @@ async function cancelAndDelivered(req, res) {
         createdOn: "DESC",
       },
     });
-    console.log(allcancelledAndDeliveredOrdes,"all orders")
+    console.log(allcancelledAndDeliveredOrdes, "all orders");
 
-  
     allcancelledAndDeliveredOrdes.map((order) => {
-      const formattedTime = formatInTimeZone(order.createdOn, 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ssXXX');
+      const formattedTime = formatInTimeZone(
+        order.createdOn,
+        "Asia/Kolkata",
+        "yyyy-MM-dd HH:mm:ssXXX"
+      );
       console.log(order.id, formattedTime, "time");
     });
     console.log(allcancelledAndDeliveredOrdes, "alll");
@@ -274,6 +277,59 @@ async function cancelAndDelivered(req, res) {
   }
 }
 
+async function ordersInRestaurant(req, res) {
+  try {
+    const { restaurantId } = req.params;
+
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: restaurantId },
+    });
+
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    const orderRepository = dataSource.getRepository("Order");
+    const cartRepository = dataSource.getRepository("Cart");
+    const cartItemRepository = dataSource.getRepository("CartItem");
+    const foodRepository = dataSource.getRepository("Food");
+
+    const order = await orderRepository.find({
+      relations: ["cart", "orderItems"],
+    });
+    const cart = await cartRepository.findOne({
+      where: { id: order.cartId },
+    });
+
+    const cartItems = await cartItemRepository.find({
+      where: { cart: { id: cart.id } },
+      relations: ["cart", "food"],
+    });
+
+    const allFoodOnRestaurant = await Promise.all(
+      cartItems.map(async (item) => {
+        const food = await foodRepository.findOne({
+          where: { id: item.food.id },
+          relations: ["restaurant"],
+        });
+        const restaurants = await restaurantRepository.find({
+          where: { id: food.restaurant.id },
+        });
+        return restaurants;
+      })
+    );
+    return res.status(200).json({
+      message: "All food items in that hotel are retrieved successfully",
+      Data: allFoodOnRestaurant,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to retrieve foods items of that hotel" });
+  }
+}
+
 module.exports = {
   createOrder,
   paymentSuccess,
@@ -281,4 +337,5 @@ module.exports = {
   cancelOrder,
   filterBasedOnStatus,
   cancelAndDelivered,
+  ordersInRestaurant,
 };
