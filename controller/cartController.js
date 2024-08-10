@@ -4,7 +4,6 @@ const { dataSource } = require("../db/connection");
 async function createCart(req, res) {
   try {
     const { userId } = req.params;
-    console.log(userId, "user id");
 
     const userRepository = dataSource.getRepository("User");
     const user = await userRepository.findOne({
@@ -54,7 +53,6 @@ async function deleteCart(req, res) {
 async function calculateTotalPrice(req, res) {
   try {
     const { restuarentId, cartId } = req.params;
-    console.log(cartId, "cart id");
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -71,13 +69,13 @@ async function calculateTotalPrice(req, res) {
     if (!cart) {
       return res.status(404).json({ message: "Cart is not found" });
     }
-    console.log(cart, "cart");
+
     const cartItemRepository = dataSource.getRepository("CartItem");
     const allCartItems = await cartItemRepository.find({
       where: { cart: { id: cartId } },
       relations: ["cart", "food"],
     });
-    console.log(allCartItems, "items");
+
     const totalAmount = allCartItems.reduce((total, item) => {
       const itemTotalPrice = item.quantity * item.food.discountPrice;
       return total + itemTotalPrice;
@@ -85,7 +83,6 @@ async function calculateTotalPrice(req, res) {
 
     cart.totalPrice = Number((totalAmount + cart.deliveryCharge).toFixed(1));
     await cartRepository.save(cart);
-    console.log("success");
 
     return res
       .status(200)
@@ -98,7 +95,7 @@ async function calculateTotalPrice(req, res) {
 async function calculateDeliveryTime(req, res) {
   try {
     const { restuarentId, cartId } = req.params;
-    console.log(cartId, "id");
+
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
       where: { id: restuarentId },
@@ -113,7 +110,7 @@ async function calculateDeliveryTime(req, res) {
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
     }
-    console.log(cart, "cart");
+
     const cartItemRepository = dataSource.getRepository("CartItem");
     const allCartItems = await cartItemRepository.find({
       where: { cart: { id: cartId } },
@@ -140,7 +137,6 @@ async function updateDeliveryCharge(req, res) {
   try {
     const { restuarentId, cartId } = req.params;
     const { deliveryCharge } = req.body;
-    console.log(restuarentId, cartId);
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -160,7 +156,6 @@ async function updateDeliveryCharge(req, res) {
     cart.modifiedBy = restaurant.restaurantName;
     cart.modifiedOn = new Date();
 
-    console.log(cart, "cart data");
     await cartRepository.save(cart);
 
     return res
@@ -178,5 +173,5 @@ module.exports = {
   deleteCart,
   calculateTotalPrice,
   calculateDeliveryTime,
-  updateDeliveryCharge
+  updateDeliveryCharge,
 };

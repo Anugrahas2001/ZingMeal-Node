@@ -8,8 +8,7 @@ const {
 } = require("../controller/userController.js");
 const {
   addToCart,
-  updateQuantity,
-  removeFromCart,
+  updateCartItem,
 } = require("../controller/cartItemController.js");
 const { createCart, deleteCart } = require("../controller/cartController.js");
 const { updateRating } = require("../controller/ratingController.js");
@@ -22,37 +21,28 @@ const {
 const router = express.Router();
 
 router.post("/signUp", signUp);
-//yes
 
 router.post("/login", login);
-//yes
 
 router.get("/search/:query", searchByRestuarantOrFood);
-//no
 
 router.post("/accessToken", createAccessToken);
-//yes
 
 router.post("/createCart/:userId", authentication, createCart);
-//yes
 
 router.delete("/deleteCart/:cartId", authentication, deleteCart);
-//yes
 
 router.post("/addToCart/:userId/:cartId/:foodId", authentication, addToCart);
-//yes
 
-router.delete("/removeFromCart/:cartItemId", authentication, removeFromCart);
-//yes
+// router.delete("/removeFromCart/:cartItemId", authentication, removeFromCart);
 
-router.patch("/updateQuantity/:userId/:itemId", authentication, updateQuantity);
-//yes
+// router.patch("/updateQuantity/:userId/:itemId", authentication, updateQuantity);
+
+router.patch("/updateCartItem/:cartItemId",authentication, updateCartItem);
 
 router.post("/createOrder", createOrder);
-//yes
 
 router.post("/paymentSuccess/:userId/:cartId", authentication, paymentSuccess);
-//yes
 
 router.patch("/updateRating/:userId/:itemId", authentication, updateRating);
 

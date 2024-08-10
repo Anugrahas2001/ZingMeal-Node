@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/user', userRouter); 
-app.use("/restuarent", restuarentRouter);
+app.use("/restaurant", restuarentRouter);
 
 app.listen(PORT, () => {
   console.log(`server started at post ${PORT}`);

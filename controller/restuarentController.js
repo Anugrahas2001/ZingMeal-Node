@@ -26,7 +26,7 @@ async function signUp(req, res) {
       closingTime,
     } = req.body;
     const encodedPassword = await encrypt.encryptPass(restaurantPassword);
-  
+
     const result = await cloudinary.uploader.upload(req.file.path);
 
     const restaurantId = cuid();
@@ -39,7 +39,7 @@ async function signUp(req, res) {
       createdOn: new Date(),
     };
     const ratingRepository = dataSource.getRepository("Rating");
-    const savedRating =await ratingRepository.save(rating);
+    const savedRating = await ratingRepository.save(rating);
 
     const restaurant = {
       id: restaurantId,
@@ -137,7 +137,6 @@ async function deleteRestuarent(req, res) {
 async function updateRestuarent(req, res) {
   try {
     const { id, restaurantStatus } = req.params;
-    console.log(id, restaurantStatus, "restuarent id");
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -148,7 +147,6 @@ async function updateRestuarent(req, res) {
         .status(404)
         .json({ message: `Restuarent with this id ${id} not found` });
     }
-    console.log(restaurant, "before update");
 
     restaurant.restaurantName = req.body.restaurantName
       ? req.body.restaurantName
@@ -172,7 +170,7 @@ async function updateRestuarent(req, res) {
 
     restaurant.modifiedBy = restaurant.restaurantName;
     restaurant.modifiedOn = new Date();
-    console.log(restaurant, "after update");
+
     await restaurantRepository.save(restaurant);
     return res.status(200).json({
       message: "Resturent successfully updated",
@@ -205,7 +203,7 @@ async function getRestaurantById(req, res) {
     const restaurant = await restaurantRepository.findOne({
       where: { id: id },
     });
-    console.log(restaurant);
+
     return res
       .status(200)
       .json({ message: "Successfully data retrieved", Data: restaurant });

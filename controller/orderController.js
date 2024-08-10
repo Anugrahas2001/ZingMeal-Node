@@ -71,60 +71,64 @@ async function paymentSuccess(req, res) {
       where: { cart: { id: cartId } },
       relations: ["cart", "food"],
     });
+    if (allCartItems.length > 0) {
+      const orderRepository = dataSource.getRepository("Order");
+      const orderItemRepository = dataSource.getRepository("OrderItem");
+      const paymentRepository = dataSource.getRepository("Payment");
 
-    const orderRepository = dataSource.getRepository("Order");
-    const orderItemRepository = dataSource.getRepository("OrderItem");
-    const paymentRepository = dataSource.getRepository("Payment");
-
-    const orderData = {
-      id: cuid(),
-      orderStatus: orderStatus.PENDING,
-      totalPrice: cart.totalPrice,
-      deliveryCharge: cart.deliveryCharge,
-      deliveryTime: cart.deliveryTime,
-      paymentStatus: paymentStatus.PAID,
-      paymentMethods: paymentMethod,
-      user: userId,
-      cart: cartId,
-      createdBy: userId,
-      createdOn: new Date(),
-    };
-
-    await orderRepository.save(orderData);
-
-    const orderItems = allCartItems.map((cartItem) => {
-      return orderItemRepository.create({
+      const orderData = {
         id: cuid(),
-        order: orderData.id,
-        food: cartItem.food.id,
-        quantity: cartItem.quantity,
+        orderStatus: orderStatus.PENDING,
+        totalPrice: cart.totalPrice,
+        deliveryCharge: cart.deliveryCharge,
+        deliveryTime: cart.deliveryTime,
+        paymentStatus: paymentStatus.PAID,
+        paymentMethods: paymentMethod,
+        user: userId,
+        cart: cartId,
         createdBy: userId,
         createdOn: new Date(),
+      };
+
+      await orderRepository.save(orderData);
+
+      const orderItems = allCartItems.map((cartItem) => {
+        return orderItemRepository.create({
+          id: cuid(),
+          order: orderData.id,
+          food: cartItem.food.id,
+          quantity: cartItem.quantity,
+          createdBy: userId,
+          createdOn: new Date(),
+        });
       });
-    });
 
-    await orderItemRepository.save(orderItems);
+      await orderItemRepository.save(orderItems);
 
-    const payment = {
-      id: cuid(),
-      razorpayPaymentId: razorpayPaymentId,
-      razorpayOrderId: razorpayOrderId,
-      razorpaySignature: razorpaySignature,
-      paymentMethods: paymentMethod,
-      user: userId,
-      order: orderData.id,
-      createdOn: new Date(),
-    };
+      const payment = {
+        id: cuid(),
+        razorpayPaymentId: razorpayPaymentId,
+        razorpayOrderId: razorpayOrderId,
+        razorpaySignature: razorpaySignature,
+        paymentMethods: paymentMethod,
+        user: userId,
+        order: orderData.id,
+        createdOn: new Date(),
+      };
 
-    await paymentRepository.save(payment);
+      await paymentRepository.save(payment);
 
-    allCartItems.map((item) => {
-      cartItemRepository.remove(item);
-    });
+      allCartItems.map((item) => {
+        cartItemRepository.remove(item);
+      });
 
+      res
+        .status(200)
+        .json({ message: "Order placed successfully", Data: orderData });
+    }
     res
-      .status(200)
-      .json({ message: "Order placed successfully", Data: orderData });
+      .status(400)
+      .json({ message: "Can't place Order with empty cart items" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to place order" });
@@ -134,6 +138,8 @@ async function paymentSuccess(req, res) {
 async function updateOrderStatus(req, res) {
   try {
     const { restaurantId, orderId } = req.params;
+    const { orderStatus } = req.body;
+    console.log(orderStatus, "order status");
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -146,9 +152,7 @@ async function updateOrderStatus(req, res) {
     });
     console.log(order, "orderrr");
 
-    (order.orderStatus = req.body.orderStatus
-      ? req.body.orderStatus
-      : order.orderStatus),
+    (order.orderStatus = orderStatus ? orderStatus : order.orderStatus),
       (modifiedBy = restaurant.restaurantName);
     modifiedOn = new Date();
 
@@ -281,52 +285,28 @@ async function ordersInRestaurant(req, res) {
   try {
     const { restaurantId } = req.params;
 
-    const restaurantRepository = dataSource.getRepository("Restaurant");
-    const restaurant = await restaurantRepository.findOne({
-      where: { id: restaurantId },
+    const orderItemRepository = dataSource.getRepository("OrderItem");
+
+    const orderItems = await orderItemRepository.find({
+      where: {
+        food: {
+          restaurant: {
+            id: restaurantId,
+          },
+        },
+      },
+      relations: ["food"],
     });
 
-    if (!restaurant) {
-      return res.status(404).json({ message: "Restaurant not found" });
+    console.log(orderItems, "items");
+    if (orderItems.length > 0) {
+      return res.status(200).json({ message: "Success", Data: orderItems });
     }
 
-    const orderRepository = dataSource.getRepository("Order");
-    const cartRepository = dataSource.getRepository("Cart");
-    const cartItemRepository = dataSource.getRepository("CartItem");
-    const foodRepository = dataSource.getRepository("Food");
-
-    const order = await orderRepository.find({
-      relations: ["cart", "orderItems"],
-    });
-    const cart = await cartRepository.findOne({
-      where: { id: order.cartId },
-    });
-
-    const cartItems = await cartItemRepository.find({
-      where: { cart: { id: cart.id } },
-      relations: ["cart", "food"],
-    });
-
-    const allFoodOnRestaurant = await Promise.all(
-      cartItems.map(async (item) => {
-        const food = await foodRepository.findOne({
-          where: { id: item.food.id },
-          relations: ["restaurant"],
-        });
-        const restaurants = await restaurantRepository.find({
-          where: { id: food.restaurant.id },
-        });
-        return restaurants;
-      })
-    );
-    return res.status(200).json({
-      message: "All food items in that hotel are retrieved successfully",
-      Data: allFoodOnRestaurant,
-    });
+    return res.status(404).json({ message: "No order items found", Data: [] });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Failed to retrieve foods items of that hotel" });
+    console.error(error);
+    return res.status(403).json({ message: "Failed" });
   }
 }
 

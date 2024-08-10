@@ -28,7 +28,11 @@ async function updateRating(req, res) {
     }
 
     const totalUsers = modifiedByUsers.length;
-    item.itemRating = (item.itemRating * (totalUsers - 1) + itemRating) / totalUsers;
+    item.itemRating = Number(
+      ((item.itemRating * (totalUsers - 1) + itemRating) / totalUsers).toFixed(
+        1
+      )
+    );
     item.modifiedBy = user.name;
     item.modifiedOn = new Date();
     await ratingRepository.save(item);

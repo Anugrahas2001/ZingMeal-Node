@@ -84,43 +84,43 @@ async function login(req, res) {
     return res.status(404).json({ message: "user signin failed" });
   }
 }
-
 async function searchByRestuarantOrFood(req, res) {
   try {
     const { query } = req.params;
-    console.log(query,"text")
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.find({
       where: { restaurantName: ILike(`%${query}%`) },
     });
-    console.log(restaurant, "all foods");
 
     if (restaurant.length > 0) {
       return res
         .status(200)
-        .json({ message: "Success Restuarant", Data: restaurant });
+        .json({ message: "Success Restaurant", Data: restaurant });
     }
+
     const foodRepository = dataSource.getRepository("Food");
     const food = await foodRepository.find({
       where: { foodName: ILike(`%${query}%`) },
+      relations: ["restaurant"],
     });
-    console.log(food, "foods");
 
     if (food.length > 0) {
-      restaurantWithFood =await restaurantRepository.find({
-        where: { id: food.restaurantId },
-      });
-      console.log(restaurantWithFood, "with food");
+      const uniqueRestaurants = food
+        .map(item => item.restaurant)
+
       return res
         .status(200)
-        .json({ message: "success food", Data: restaurantWithFood });
+        .json({ message: "Success Food", Data: uniqueRestaurants });
     }
+
     return res.status(404).json({ message: "Not found", Data: [] });
   } catch (error) {
+    console.error(error);
     return res.status(403).json({ message: "Failed" });
   }
 }
+
 
 async function createAccessToken(req, res) {
   const { refreshToken } = req.body;
@@ -137,7 +137,6 @@ async function createAccessToken(req, res) {
   if (!token) {
     return res.status(404).json({ message: "Refresh token not found" });
   }
-  console.log(token, "token");
 
   jwt.verify(token.token, process.env.JWT_REFRESH_SECRET, async (err, user) => {
     if (err) {

@@ -31,15 +31,6 @@ async function createFood(req, res) {
       actualPrice,
     } = req.body;
 
-    console.log(
-      foodName,
-      foodCategory,
-      foodDescription,
-      foodType,
-      preparingTime,
-      actualPrice
-    );
-
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
       where: { id: restaurantId },
@@ -92,7 +83,6 @@ async function createFood(req, res) {
       .status(201)
       .json({ message: "Food item created successfully", Data: food });
   } catch (error) {
-    console.error(error);
     return res.status(403).json({ message: "Food creation failed" });
   }
 }
@@ -137,7 +127,7 @@ async function getFoodById(req, res) {
 async function updateFood(req, res) {
   try {
     const { restaurantId, foodId } = req.params;
-    console.log(restaurantId, "id of restaurant");
+    
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
       where: { id: restaurantId },
@@ -147,9 +137,7 @@ async function updateFood(req, res) {
         .status(404)
         .json({ message: `Restuarent not found with this id ${restaurantId}` });
     }
-    console.log(restaurant.restaurantName, "to update");
-
-    console.log(foodId, "foodId");
+    
     const foodRepository = dataSource.getRepository("Food");
     const food = await foodRepository.findOne({
       where: { id: foodId },
@@ -160,7 +148,6 @@ async function updateFood(req, res) {
         .status(404)
         .json({ message: `food not found with this is ${foodId}` });
     }
-    console.log(food, "old food object");
     food.foodName = req.body.foodName ? req.body.foodName : food.foodName;
     food.foodImg = req.body.foodImg ? req.body.foodImg : food.foodImg;
     food.foodDescription = req.body.foodDescription
@@ -183,9 +170,9 @@ async function updateFood(req, res) {
     }
     food.modifiedBy = restaurant.restaurantName;
     food.modifiedOn = new Date();
-    console.log(food, "updated food");
+    
     await foodRepository.save(food);
-    console.log("successfully updated");
+    
     return res
       .status(200)
       .json({ message: "food item is suucessfully updated", food });
@@ -197,13 +184,12 @@ async function updateFood(req, res) {
 async function deleteFood(req, res) {
   try {
     const { foodId } = req.params;
-    console.log(foodId, "iddd");
 
     const foodRepository = dataSource.getRepository("Food");
     const food = await foodRepository.findOne({
       where: { id: foodId },
     });
-    console.log(food, "foooddd");
+  
 
     if (!food) {
       return res
@@ -212,7 +198,7 @@ async function deleteFood(req, res) {
     }
 
     await foodRepository.remove(food);
-    console.log("deleted");
+ 
     return res.status(200).json({ message: "Food item deleted successfully" });
   } catch (error) {
     return res.status(204).json({ message: "Failed to delete food item" });
@@ -222,7 +208,6 @@ async function deleteFood(req, res) {
 async function getAllFoodsBasedOnRestaurant(req, res) {
   try {
     const { restaurantId } = req.params;
-    console.log(restaurantId, "id of restaurant");
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -238,7 +223,6 @@ async function getAllFoodsBasedOnRestaurant(req, res) {
     const allFoods = await foodRepository.find({
       where: { restaurant: { id: restaurantId } },
     });
-    console.log(allFoods);
 
     return res.status(200).json({
       message: "Successfully retrieved the food items",
@@ -273,7 +257,6 @@ async function getFoodsBasedOnType(req, res) {
 async function getAllFoodsBasedOnCategory(req, res) {
   try {
     const { category } = req.params;
-    console.log(category, "ddgdj");
 
     const foodRepository = dataSource.getRepository("Food");
     const allFoods = await foodRepository.find({
