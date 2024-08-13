@@ -168,10 +168,34 @@ async function updateDeliveryCharge(req, res) {
   }
 }
 
+async function getCart(req, res) {
+  try {
+    const { userId } = req.params;
+
+    const userRepository = dataSource.getRepository("User");
+    const user = await userRepository.findOne({
+      where:{id:userId}
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const cartRepository = dataSource.getRepository("Cart");
+    const cart = await cartRepository.findOne({
+      where: { user: { id: userId } },
+      relations:["user"]
+    })
+
+    return res.status(200).json({ message: "cart retrieved", Data: cart });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 module.exports = {
   createCart,
   deleteCart,
   calculateTotalPrice,
   calculateDeliveryTime,
   updateDeliveryCharge,
+  getCart,
 };

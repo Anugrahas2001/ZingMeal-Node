@@ -13,6 +13,16 @@ async function signUp(req, res) {
     const { email, password } = req.body;
     const encodedPassword = await encrypt.encryptPass(password);
 
+    const userRepository=dataSource.getRepository("User");
+    const userFromDb=await userRepository.findOne({
+      where:{email:email}
+    })
+
+    if(userFromDb)
+    {
+      return res.status(400).json({message:"User with this email is already present"})
+    }
+
     const user = {
       id: cuid(),
       name: email.substring(0, email.indexOf("@")),
@@ -22,7 +32,6 @@ async function signUp(req, res) {
       createdOn: new Date(),
     };
 
-    var userRepository = dataSource.getRepository("User");
     userRepository.save(user);
 
     const accessToken = encrypt.generateToken({ id: user.id });
@@ -77,6 +86,7 @@ async function login(req, res) {
     const refreshToken = encrypt.generateRefreshToken({ id: user.id });
     return res.status(200).json({
       meassage: "Login successfull",
+      Data:user,
       accessToken: accessToken,
       refreshToken: refreshToken,
     });

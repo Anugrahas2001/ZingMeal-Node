@@ -9,8 +9,13 @@ const {
 const {
   addToCart,
   updateCartItem,
+  getAllCartItems,
 } = require("../controller/cartItemController.js");
-const { createCart, deleteCart } = require("../controller/cartController.js");
+const {
+  createCart,
+  deleteCart,
+  getCart,
+} = require("../controller/cartController.js");
 const { updateRating } = require("../controller/ratingController.js");
 const {
   createOrder,
@@ -30,6 +35,8 @@ router.post("/accessToken", createAccessToken);
 
 router.post("/createCart/:userId", authentication, createCart);
 
+router.get("/getCart/:userId",authentication, getCart);
+
 router.delete("/deleteCart/:cartId", authentication, deleteCart);
 
 router.post("/addToCart/:userId/:cartId/:foodId", authentication, addToCart);
@@ -38,7 +45,9 @@ router.post("/addToCart/:userId/:cartId/:foodId", authentication, addToCart);
 
 // router.patch("/updateQuantity/:userId/:itemId", authentication, updateQuantity);
 
-router.patch("/updateCartItem/:cartItemId",authentication, updateCartItem);
+router.get("/getAllCartItems/:cartId",getAllCartItems);
+
+router.patch("/updateCartItem/:cartItemId", authentication, updateCartItem);
 
 router.post("/createOrder", createOrder);
 

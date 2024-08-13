@@ -17,6 +17,7 @@ async function signUp(req, res) {
       }
     });
   });
+
   try {
     const {
       restaurantName,
@@ -25,6 +26,17 @@ async function signUp(req, res) {
       openingTime,
       closingTime,
     } = req.body;
+
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restuarentData=await restaurantRepository.findOne({
+      where:{restaurantName:restaurantName}
+    })
+
+    if(restuarentData)
+    {
+      return res.status(400).json({message:"Restaurant already exist"})
+    }
+
     const encodedPassword = await encrypt.encryptPass(restaurantPassword);
 
     const result = await cloudinary.uploader.upload(req.file.path);
@@ -41,6 +53,11 @@ async function signUp(req, res) {
     const ratingRepository = dataSource.getRepository("Rating");
     const savedRating = await ratingRepository.save(rating);
 
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    const openingDateTime = new Date(`${currentDate}T${openingTime}:00+05:30`);
+    const closingDateTime = new Date(`${currentDate}T${closingTime}:00+05:30`);
+
     const restaurant = {
       id: restaurantId,
       restaurantName: restaurantName,
@@ -48,13 +65,13 @@ async function signUp(req, res) {
       restaurantImg: result.url,
       restaurantPassword: encodedPassword,
       restaurantStatus: "Closed",
-      openingTime: new Date(openingTime),
-      closingTime: new Date(closingTime),
+      openingTime: openingDateTime,
+      closingTime: closingDateTime,
       createdOn: new Date(),
       createdBy: restaurantName,
     };
 
-    const restaurantRepository = dataSource.getRepository("Restaurant");
+    
     await restaurantRepository.save(restaurant);
 
     const accessToken = encrypt.generateToken({ id: restaurant.id });
@@ -70,6 +87,7 @@ async function signUp(req, res) {
 
     return res.status(201).json({
       message: "Restuarent created successfully",
+      Data:restaurant,
       AccessToken: accessToken,
       RefreshToken: refreshToken,
     });
@@ -77,6 +95,7 @@ async function signUp(req, res) {
     return res.status(403).json({ message: "Restuarent creation failed" });
   }
 }
+
 
 async function login(req, res) {
   try {

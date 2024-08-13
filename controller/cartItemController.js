@@ -75,7 +75,6 @@ async function addToCart(req, res) {
 //     return res.status(403).json({ message: "Failed to remove cart Item" });
 //   }
 // }
-
 async function updateCartItem(req, res) {
   try {
     const { cartItemId } = req.params;
@@ -87,31 +86,64 @@ async function updateCartItem(req, res) {
     });
 
     if (!cartItem) {
-      return res.status(404).json({ message: "Cart item not present" });
+      return res.status(404).json({ message: "Cart item not found" });
     }
 
+    // Handle updating quantity or removing item based on value
     if (value > 0) {
-      cartItem.quantity += 1;
-      await cartItemRepository.save(cartItem);
-      return res.status(200).json({
-        message: "cart item quantity increased successfully",
-        Data: cartItem,
-      });
+      cartItem.quantity += value; // Increase quantity by the provided value
     } else if (value < 0) {
-      cartItem.quantity -= 1;
-      await cartItemRepository.save(cartItem);
+      cartItem.quantity += value; // Decrease quantity by the provided value
+      // Remove the item if quantity is zero or less
+      if (cartItem.quantity <= 0) {
+        await cartItemRepository.remove(cartItem);
+        return res.status(200).json({
+          message: "Cart item removed successfully",
+          Data: cartItem,
+        });
+      }
+    } else if (value === 0) {
+      await cartItemRepository.remove(cartItem);
       return res.status(200).json({
-        message: "cart item quantity decreased successfully",
+        message: "Cart item removed successfully",
         Data: cartItem,
       });
     }
-    await cartItemRepository.remove(cartItem);
-    return res
-      .status(200)
-      .json({ message: "cart item removed successfully", Data: cartItem });
+
+    await cartItemRepository.save(cartItem);
+    return res.status(200).json({
+      message: "Cart item updated successfully",
+      Data: cartItem,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Failed to update the cart item" });
   }
 }
 
-module.exports = { addToCart, updateCartItem };
+async function getAllCartItems(req, res) {
+  try {
+    const { cartId } = req.params;
+    const cartRepository = dataSource.getRepository("Cart");
+    const cart = await cartRepository.findOne({
+      where: { id: cartId },
+    });
+
+    if (!cart) {
+      return res.status(404).json({ message: "cart not found" });
+    }
+
+    const cartItemRepository = dataSource.getRepository("CartItem");
+    const cartItems = await cartItemRepository.find({
+      where: { cart: { id: cartId } },
+      relations: ["cart", "food"],
+    });
+
+    return res
+      .status(200)
+      .json({ message: "successfully retrieved data", Data: cartItems });
+  } catch (error) {
+    return res.status(500).json({ message: "failed to retrieve data" });
+  }
+}
+
+module.exports = { addToCart, updateCartItem, getAllCartItems };
