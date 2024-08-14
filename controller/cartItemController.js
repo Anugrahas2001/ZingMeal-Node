@@ -59,22 +59,6 @@ async function addToCart(req, res) {
   }
 }
 
-// async function removeFromCart(req, res) {
-//   try {
-//     const { cartItemId } = req.params;
-//     console.log(cartItemId, "cartt item id");
-
-//     const cartItemRepository = dataSource.getRepository("CartItem");
-//     const cartItem = await cartItemRepository.findOne({
-//       where: { id: cartItemId },
-//     });
-//     console.log(cartItem, "cart item remove");
-//     cartItemRepository.remove(cartItem);
-//     return res.status(200).json({ message: "Cart Item removed successfully" });
-//   } catch (error) {
-//     return res.status(403).json({ message: "Failed to remove cart Item" });
-//   }
-// }
 async function updateCartItem(req, res) {
   try {
     const { cartItemId } = req.params;
@@ -89,12 +73,10 @@ async function updateCartItem(req, res) {
       return res.status(404).json({ message: "Cart item not found" });
     }
 
-    // Handle updating quantity or removing item based on value
     if (value > 0) {
-      cartItem.quantity += value; // Increase quantity by the provided value
+      cartItem.quantity += value;
     } else if (value < 0) {
-      cartItem.quantity += value; // Decrease quantity by the provided value
-      // Remove the item if quantity is zero or less
+      cartItem.quantity += value;
       if (cartItem.quantity <= 0) {
         await cartItemRepository.remove(cartItem);
         return res.status(200).json({

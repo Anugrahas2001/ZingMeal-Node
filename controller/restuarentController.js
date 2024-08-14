@@ -57,6 +57,7 @@ async function signUp(req, res) {
 
     const openingDateTime = new Date(`${currentDate}T${openingTime}:00+05:30`);
     const closingDateTime = new Date(`${currentDate}T${closingTime}:00+05:30`);
+    // console.log(openingDateTime,closingDateTime,"going save")
 
     const restaurant = {
       id: restaurantId,
@@ -71,7 +72,6 @@ async function signUp(req, res) {
       createdBy: restaurantName,
     };
 
-    
     await restaurantRepository.save(restaurant);
 
     const accessToken = encrypt.generateToken({ id: restaurant.id });
@@ -84,6 +84,7 @@ async function signUp(req, res) {
       itemId: restaurant.id,
     };
     await tokenRepository.save(token);
+    // console.log(restaurant,"daata")
 
     return res.status(201).json({
       message: "Restuarent created successfully",
@@ -92,7 +93,7 @@ async function signUp(req, res) {
       RefreshToken: refreshToken,
     });
   } catch (error) {
-    return res.status(403).json({ message: "Restuarent creation failed" });
+    return res.status(500).json({ message: "Restuarent creation failed" });
   }
 }
 
@@ -114,7 +115,7 @@ async function login(req, res) {
       restaurant.restaurantPassword
     );
     if (!isValidPassword) {
-      return res.status(401).json({ message: "Invalid Password" });
+      return res.status(400).json({ message: "Invalid Password" });
     }
 
     const accessToken = encrypt.generateToken({ id: restaurant.id });
@@ -125,6 +126,7 @@ async function login(req, res) {
     }
     return res.status(200).json({
       message: "Restuarent Login Successfully",
+      Data:restaurant,
       AccessToken: accessToken,
       RefreshToken: refreshToken,
     });
