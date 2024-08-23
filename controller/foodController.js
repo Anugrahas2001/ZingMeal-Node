@@ -31,6 +31,17 @@ async function createFood(req, res) {
       actualPrice,
     } = req.body;
 
+    console.log(
+      foodName,
+      foodCategory,
+      foodDescription,
+      foodType,
+      preparingTime,
+      discount,
+      actualPrice,
+      "from front end"
+    );
+
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
       where: { id: restaurantId },
@@ -75,9 +86,11 @@ async function createFood(req, res) {
       createdOn: new Date(),
       restaurant: restaurant.id,
     };
+    console.log(food, "food dataa");
 
     const foodRepository = dataSource.getRepository("Food");
     await foodRepository.save(food);
+    console.log("savedd");
 
     return res
       .status(201)
@@ -126,8 +139,17 @@ async function getFoodById(req, res) {
 
 async function updateFood(req, res) {
   try {
+    await new Promise((resolve, reject) => {
+      upload.single("imageFile")(req, res, (err) => {
+        if (err) {
+          return reject(err);
+        } else {
+          return resolve();
+        }
+      });
+    });
     const { restaurantId, foodId } = req.params;
-    
+
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
       where: { id: restaurantId },
@@ -137,7 +159,7 @@ async function updateFood(req, res) {
         .status(404)
         .json({ message: `Restuarent not found with this id ${restaurantId}` });
     }
-    
+
     const foodRepository = dataSource.getRepository("Food");
     const food = await foodRepository.findOne({
       where: { id: foodId },
@@ -148,8 +170,16 @@ async function updateFood(req, res) {
         .status(404)
         .json({ message: `food not found with this is ${foodId}` });
     }
+    console.log(food, "food datat");
+    let imageUrl = food.imageFile;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path);
+      imageUrl = result.url;
+    }
+    console.log(imageUrl, "url");
+
     food.foodName = req.body.foodName ? req.body.foodName : food.foodName;
-    food.foodImg = req.body.foodImg ? req.body.foodImg : food.foodImg;
+    food.imageFile = imageUrl;
     food.foodDescription = req.body.foodDescription
       ? req.body.foodDescription
       : food.foodDescription;
@@ -170,9 +200,10 @@ async function updateFood(req, res) {
     }
     food.modifiedBy = restaurant.restaurantName;
     food.modifiedOn = new Date();
-    
+
     await foodRepository.save(food);
-    
+    console.log(food, "doneeee");
+
     return res
       .status(200)
       .json({ message: "food item is suucessfully updated", food });
@@ -184,26 +215,86 @@ async function updateFood(req, res) {
 async function deleteFood(req, res) {
   try {
     const { foodId } = req.params;
+    console.log(foodId, "food id");
 
     const foodRepository = dataSource.getRepository("Food");
+    const orderItemRepository = dataSource.getRepository("OrderItem");
+    // const orderRepository = dataSource.getRepository("Order");
     const food = await foodRepository.findOne({
       where: { id: foodId },
     });
-  
 
     if (!food) {
       return res
         .status(404)
         .json({ message: `food item not found with this id ${foodId}` });
     }
+    const orderItems = await orderItemRepository.find({
+      where: { food: { id: foodId } },
+    });
+    if (orderItems) {
+      return res
+        .status(400)
+        .json({
+          message: "Can't delete this food as it related to some orders",
+          Data: orderItems,
+        });
+    }
 
     await foodRepository.remove(food);
- 
+    console.log("Food deleted");
+
     return res.status(200).json({ message: "Food item deleted successfully" });
   } catch (error) {
-    return res.status(204).json({ message: "Failed to delete food item" });
+    return res.status(500).json({ message: "Failed to delete food item" });
   }
 }
+
+// async function deleteFood(req, res) {
+//   try {
+//     const { foodId } = req.params;
+//     console.log(foodId, "food id");
+
+//     const foodRepository = dataSource.getRepository("Food");
+//     const orderItemRepository = dataSource.getRepository("OrderItem");
+//     const orderRepository = dataSource.getRepository("Order");
+//     const food = await foodRepository.findOne({
+//       where: { id: foodId },
+//     });
+
+//     if (!food) {
+//       return res
+//         .status(404)
+//         .json({ message: `food item not found with this id ${foodId}` });
+//     }
+
+// console.log("ddhdn")
+// const orderItems=await orderItemRepository.find({
+//   where:{ food: { id: foodId } },
+//   relations:["order"]
+// })
+// const orderIds=[...new Set(orderItems.map((item)=>item.order.id))]
+
+// const orders = await orderRepository.findByIds(orderIds);
+
+//     if (!orders) {
+//       return res.status(404).json({ message: "Order not found" });
+//     }
+//     if (orders.length === 0) {
+//       return res.status(404).json({ message: "No associated orders found" });
+//     }
+
+//     console.log(orders,"dataaa")
+//     await orderRepository.delete(orders);
+//     console.log( "food dataa");
+//     await foodRepository.remove(food);
+//     console.log("Food deleted");
+
+//     return res.status(200).json({ message: "Food item deleted successfully" });
+//   } catch (error) {
+//     return res.status(500).json({ message: "Failed to delete food item" });
+//   }
+// }
 
 async function getAllFoodsBasedOnRestaurant(req, res) {
   try {

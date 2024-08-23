@@ -28,6 +28,7 @@ const {
   filterBasedOnStatus,
   cancelAndDelivered,
   ordersInRestaurant,
+  orderItemsCount,
 } = require("../controller/orderController.js");
 
 router.post("/signUp", signUp);
@@ -60,6 +61,8 @@ router.get("/foodsByCategory/:category", getAllFoodsBasedOnCategory);
 router.put("/updateFood/:restuarentId/:foodId", updateFood);
 
 router.delete("/delete/:foodId", deleteFood);
+
+router.get("/getCount", orderItemsCount);
 
 router.patch("/totalPrice/:restuarentId/:cartId", calculateTotalPrice);
 

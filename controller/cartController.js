@@ -174,7 +174,7 @@ async function getCart(req, res) {
 
     const userRepository = dataSource.getRepository("User");
     const user = await userRepository.findOne({
-      where:{id:userId}
+      where: { id: userId },
     });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -182,8 +182,8 @@ async function getCart(req, res) {
     const cartRepository = dataSource.getRepository("Cart");
     const cart = await cartRepository.findOne({
       where: { user: { id: userId } },
-      relations:["user"]
-    })
+      relations: ["user"],
+    });
 
     return res.status(200).json({ message: "cart retrieved", Data: cart });
   } catch (error) {

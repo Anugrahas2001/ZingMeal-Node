@@ -1,9 +1,10 @@
 const cuid = require("cuid");
 const { dataSource } = require("../db/connection.js");
-const { orderStatus } = require("../enum/OrderStatus.js");
 const { paymentStatus } = require("../enum/paymentStatus.js");
+const { paymentMethods } = require("../enum/paymentMethod.js");
 const { formatInTimeZone } = require("date-fns-tz");
 const { Payment } = require("../model/Payment.js");
+const { orderStatus } = require("../enum/orderStatus.js");
 const dotenv = require("dotenv");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
@@ -12,7 +13,7 @@ dotenv.config();
 async function createOrder(req, res) {
   const { amount, currency, receipt } = req.body;
 
-  var options = {
+  const options = {
     amount: amount,
     currency: currency,
     receipt: receipt,
@@ -26,8 +27,8 @@ async function createOrder(req, res) {
 
   try {
     instance.orders.create(options, function (err, order) {
-      console.log(order);
       if (err) {
+        console.error(err);
         return res.status(400).json({ message: "Failed to create order" });
       }
       return res.status(200).json({ orderId: order.id });
@@ -48,19 +49,22 @@ async function paymentSuccess(req, res) {
     } = req.body;
     const { userId, cartId } = req.params;
 
-    const generatedSignature = crypto
-      .createHmac("SHA256", process.env.RAZORPAY_KEY_SECRET)
-      .update(razorpayOrderId + "|" + razorpayPaymentId)
-      .digest("hex");
+    let isSignatureValid = true;
 
-    if (generatedSignature !== razorpaySignature) {
-      return res.status(400).json({ message: "Invalid payment signature" });
+    if (razorpaySignature) {
+      const generatedSignature = crypto
+        .createHmac("SHA256", process.env.RAZORPAY_KEY_SECRET)
+        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+        .digest("hex");
+
+      if (generatedSignature !== razorpaySignature) {
+        return res.status(400).json({ message: "Invalid payment signature" });
+      }
+      console.log("Signature verified successfully");
     }
 
     const cartRepository = dataSource.getRepository("Cart");
-    const cart = await cartRepository.findOne({
-      where: { id: cartId },
-    });
+    const cart = await cartRepository.findOne({ where: { id: cartId } });
 
     if (!cart) {
       return res.status(400).json({ message: "Cart not found" });
@@ -71,64 +75,71 @@ async function paymentSuccess(req, res) {
       where: { cart: { id: cartId } },
       relations: ["cart", "food"],
     });
-    if (allCartItems.length > 0) {
-      const orderRepository = dataSource.getRepository("Order");
-      const orderItemRepository = dataSource.getRepository("OrderItem");
-      const paymentRepository = dataSource.getRepository("Payment");
 
-      const orderData = {
+    if (allCartItems.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Can't place order with empty cart items" });
+    }
+
+    const orderRepository = dataSource.getRepository("Order");
+    const orderItemRepository = dataSource.getRepository("OrderItem");
+    const paymentRepository = dataSource.getRepository("Payment");
+
+    const orderData = {
+      id: cuid(),
+      orderStatus: orderStatus.PREPARING,
+      totalPrice: cart.totalPrice,
+      deliveryCharge: cart.deliveryCharge,
+      deliveryTime: cart.deliveryTime,
+      paymentStatus: paymentStatus.PAID,
+      paymentMethods: paymentMethod,
+      user: userId,
+      cart: cartId,
+      createdBy: userId,
+      createdOn: new Date(),
+    };
+
+    await orderRepository.save(orderData);
+
+    // Create order items
+    const orderItems = allCartItems.map((cartItem) => {
+      return orderItemRepository.create({
         id: cuid(),
-        orderStatus: orderStatus.PENDING,
-        totalPrice: cart.totalPrice,
-        deliveryCharge: cart.deliveryCharge,
-        deliveryTime: cart.deliveryTime,
-        paymentStatus: paymentStatus.PAID,
-        paymentMethods: paymentMethod,
-        user: userId,
-        cart: cartId,
+        order: orderData.id,
+        food: cartItem.food.id,
+        quantity: cartItem.quantity,
         createdBy: userId,
         createdOn: new Date(),
-      };
-
-      await orderRepository.save(orderData);
-
-      const orderItems = allCartItems.map((cartItem) => {
-        return orderItemRepository.create({
-          id: cuid(),
-          order: orderData.id,
-          food: cartItem.food.id,
-          quantity: cartItem.quantity,
-          createdBy: userId,
-          createdOn: new Date(),
-        });
       });
+    });
 
-      await orderItemRepository.save(orderItems);
+    await orderItemRepository.save(orderItems);
 
-      const payment = {
-        id: cuid(),
-        razorpayPaymentId: razorpayPaymentId,
-        razorpayOrderId: razorpayOrderId,
-        razorpaySignature: razorpaySignature,
-        paymentMethods: paymentMethod,
-        user: userId,
-        order: orderData.id,
-        createdOn: new Date(),
-      };
+    // Create payment entry
+    const payment = {
+      id: cuid(),
+      razorpayPaymentId: razorpayPaymentId || null,
+      razorpayOrderId: razorpayOrderId || null,
+      razorpaySignature: razorpaySignature || null,
+      paymentMethods: paymentMethod,
+      user: userId,
+      order: orderData.id,
+      createdOn: new Date(),
+    };
 
-      await paymentRepository.save(payment);
+    await paymentRepository.save(payment);
 
-      allCartItems.map((item) => {
-        cartItemRepository.remove(item);
-      });
+    await Promise.all(
+      allCartItems.map((item) => cartItemRepository.remove(item))
+    );
 
-      res
-        .status(200)
-        .json({ message: "Order placed successfully", Data: orderData });
-    }
-    res
-      .status(400)
-      .json({ message: "Can't place Order with empty cart items" });
+    res.status(200).json({
+      message: "Order placed successfully",
+      Data: orderData,
+      OrderItems: orderItems,
+      payment: payment,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to place order" });
@@ -139,7 +150,6 @@ async function updateOrderStatus(req, res) {
   try {
     const { restaurantId, orderId } = req.params;
     const { orderStatus } = req.body;
-    console.log(orderStatus, "order status");
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -147,19 +157,20 @@ async function updateOrderStatus(req, res) {
     });
 
     const orderRepository = dataSource.getRepository("Order");
-    const order = await orderRepository.findOne({
-      where: { id: orderId },
-    });
-    console.log(order, "orderrr");
+    const order = await orderRepository.findOne({ where: { id: orderId } });
 
-    (order.orderStatus = orderStatus ? orderStatus : order.orderStatus),
-      (modifiedBy = restaurant.restaurantName);
-    modifiedOn = new Date();
+    if (order) {
+      order.orderStatus = orderStatus || order.orderStatus;
+      order.modifiedBy = restaurant ? restaurant.restaurantName : "Unknown";
+      order.modifiedOn = new Date();
 
-    await orderRepository.save(order);
-    return res
-      .status(200)
-      .json({ message: "Successfully updated order status" });
+      await orderRepository.save(order);
+      return res
+        .status(200)
+        .json({ message: "Successfully updated order status" });
+    } else {
+      return res.status(404).json({ message: "Order not found" });
+    }
   } catch (error) {
     return res
       .status(500)
@@ -170,50 +181,45 @@ async function updateOrderStatus(req, res) {
 async function cancelOrder(req, res) {
   try {
     const { orderId } = req.params;
-    console.log(orderId, "order id");
 
     const orderRepository = dataSource.getRepository("Order");
-    const order = await orderRepository.findOne({
-      where: { id: orderId },
-    });
+    const order = await orderRepository.findOne({ where: { id: orderId } });
 
-    console.log(order, "orderrr");
+    if (order) {
+      const orderItemRepository = dataSource.getRepository("OrderItem");
+      const allOrderItems = await orderItemRepository.find({
+        where: { order: { id: orderId } },
+      });
 
-    const orderItemRepository = dataSource.getRepository("OrderItem");
-    const allOrderItem = await orderItemRepository.find({
-      where: { order: { id: orderId } },
-    });
+      const paymentRepository = dataSource.getRepository("Payment");
+      const payment = await paymentRepository.findOne({
+        where: { order: { id: orderId } },
+      });
 
-    console.log(allOrderItem, "allOrders");
+      const currentTime = new Date().getTime();
+      const createdTime = order.createdOn.getTime();
+      const timeDifferenceInMn = (currentTime - createdTime) / (1000 * 60);
+      console.log(timeDifferenceInMn, "in minutess");
 
-    const paymentRepository = dataSource.getRepository("Payment");
-    const payment = await paymentRepository.findOne({
-      where: { order: { id: orderId } },
-    });
-    console.log(payment, "payment");
-    const currentTime = new Date().getTime();
-    const createdTime = order.createdOn.getTime();
-    console.log(currentTime, "current time", createdTime, "created on");
-    const timeDifferenceinMs = currentTime - createdTime;
-    console.log(timeDifferenceinMs, "time difference");
+      if (timeDifferenceInMn < 30 && order.orderStatus === "PREPARING") {
+        // await Promise.all(
+        //   allOrderItems.map((item) => orderItemRepository.remove(item))
+        // );
+        if (payment) await paymentRepository.remove(payment);
+        // await orderRepository.remove(order);
+        order.orderStatus = orderStatus.CANCELLED;
+        await orderRepository.save(order);
+        console.log("saved");
 
-    const timeDifferenceinHr = timeDifferenceinMs / (1000 * 60 * 60);
-    console.log(timeDifferenceinHr, "in hours");
-
-    if (timeDifferenceinHr < 24) {
-      console.log("deleting");
-      await Promise.all(
-        allOrderItem.map((item) => orderItemRepository.remove(item))
-      );
-      console.log("orderitem deleted");
-      await paymentRepository.remove(payment);
-      console.log("payment deleted");
-      await orderRepository.remove(order);
-      console.log("deleted");
-      return res.status(200).json({ message: "Order cancelled successfully" });
+        return res
+          .status(200)
+          .json({ message: "Order cancelled successfully", Data: order });
+      } else {
+        return res.status(400).json({ message: "Can't cancel this order" });
+      }
+    } else {
+      return res.status(404).json({ message: "Order not found" });
     }
-    console.log("item cancelled");
-    return res.status(400).json({ message: "Can't cancel this order" });
   } catch (error) {
     return res.status(500).json({ message: "Can't cancel this order" });
   }
@@ -222,91 +228,144 @@ async function cancelOrder(req, res) {
 async function filterBasedOnStatus(req, res) {
   try {
     const orderRepository = dataSource.getRepository("Order");
-    const allOrders = await orderRepository.find();
-    console.log(allOrders, "all orders");
+    const allOrders = await orderRepository.find({
+      relations: ["orderItems", "orderItems.food"],
+    });
 
-    const pendingOrders = allOrders.sort((order1, order2) => {
+    const sortedOrders = allOrders.sort((order1, order2) => {
       if (
-        order1.status === orderStatus.PENDING &&
-        order2.status != orderStatus.PENDING
+        order1.orderStatus === orderStatus.PREPARING &&
+        order2.orderStatus !== orderStatus.PREPARING
       ) {
         return -1;
       }
       if (
-        order1.status != orderStatus.PENDING &&
-        order2.status === orderStatus.PENDING
+        order2.orderStatus === orderStatus.PREPARING &&
+        order1.orderStatus !== orderStatus.PREPARING
       ) {
         return 1;
       }
-      return 0;
+      return order2.createdOn - order1.createdOn;
     });
-    console.log(pendingOrders, "pending orders");
-    return res
-      .status(200)
-      .json({ message: "Orders sorted based on status", Data: pendingOrders });
+
+    await Promise.all(
+      sortedOrders.map(async (order) => {
+        const orderItemRepository = dataSource.getRepository("OrderItem");
+        const orderItems = await orderItemRepository.find({
+          where: { order: { id: order.id } },
+          relations: ["food"],
+        });
+        return orderItems;
+      })
+    );
+
+    console.log(sortedOrders, "sorted orders");
+
+    return res.status(200).json({ sortedOrders });
   } catch (error) {
-    return res.status(500).json({ message: "Failed to sort orders" });
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch orders based on status" });
   }
 }
 
 async function cancelAndDelivered(req, res) {
   try {
     const orderRepository = dataSource.getRepository("Order");
-    const allcancelledAndDeliveredOrdes = await orderRepository.find({
-      where: [
-        { orderStatus: orderStatus.CANCELLED },
-        { orderStatus: orderStatus.DELIVERED },
-      ],
-      order: {
-        createdOn: "DESC",
-      },
+    const orders = await orderRepository.find({
+      relations: ["orderItems", "orderItems.food"],
     });
-    console.log(allcancelledAndDeliveredOrdes, "all orders");
+    console.log(orders, "1");
 
-    allcancelledAndDeliveredOrdes.map((order) => {
-      const formattedTime = formatInTimeZone(
-        order.createdOn,
-        "Asia/Kolkata",
-        "yyyy-MM-dd HH:mm:ssXXX"
+    const filteredOrders = orders.filter((order) => {
+      const currentTime = new Date().getTime();
+      const createdTime = order.createdOn.getTime();
+      const timeDifferenceInHr = (currentTime - createdTime) / (1000 * 60 * 60);
+      console.log(timeDifferenceInHr, "diffrence 2");
+
+      return (
+        (order.orderStatus === orderStatus.CANCELLED &&
+          timeDifferenceInHr > 24) ||
+        order.orderStatus === orderStatus.DELIVERED
       );
-      console.log(order.id, formattedTime, "time");
     });
-    console.log(allcancelledAndDeliveredOrdes, "alll");
-    return res.status(200).json({
-      message: "successfully sorted bsed on created time",
-      Data: allcancelledAndDeliveredOrdes,
-    });
+
+    return res.status(200).json({ Data: filteredOrders });
   } catch (error) {
-    return res.status(500).json({ message: "Failed to sort order" });
+    return res.status(500).json({ message: "Failed to fetch orders" });
   }
 }
 
 async function ordersInRestaurant(req, res) {
   try {
     const { restaurantId } = req.params;
-
-    const orderItemRepository = dataSource.getRepository("OrderItem");
-
-    const orderItems = await orderItemRepository.find({
-      where: {
-        food: {
-          restaurant: {
-            id: restaurantId,
-          },
-        },
-      },
-      relations: ["food"],
+    console.log(restaurantId);
+    const orderRepository = dataSource.getRepository("Order");
+    console.log("shjsj", orderRepository);
+    const orders = await orderRepository.find({
+      where: { orderItems: { food: { restaurant: { id: restaurantId } } } },
+      relations: [
+        "orderItems",
+        "orderItems.food",
+        "orderItems.food.restaurant",
+      ],
     });
 
-    console.log(orderItems, "items");
-    if (orderItems.length > 0) {
-      return res.status(200).json({ message: "Success", Data: orderItems });
+    console.log(orders, "alll aorderrsg");
+    return res.status(200).json({ orders });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to fetch orders" });
+  }
+}
+
+async function getAllOrders(req, res) {
+  try {
+    const { userId, orderId } = req.params;
+    console.log(userId, orderId, "user and order");
+
+    const userRepository = dataSource.getRepository("User");
+    const user = await userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    return res.status(404).json({ message: "No order items found", Data: [] });
+    const orderItemRepository = dataSource.getRepository("OrderItem");
+    const orderItems = await orderItemRepository.find({
+      where: { order: { id: orderId } },
+      relations: ["order", "food"],
+    });
+
+    console.log(orderItems, "order itemssss");
+    return res.status(200).json({
+      message: "Successfully retrieved orderItems",
+      Data: orderItems,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(403).json({ message: "Failed" });
+    return res.status(500).json({
+      message: "Failed to reteive order items",
+    });
+  }
+}
+
+async function orderItemsCount(req, res) {
+  try {
+    const cartItemRepository = dataSource.getRepository("CartItem");
+
+    const cartItems = await cartItemRepository.find();
+    if (!cartItems) {
+      return res.status(404).json({ message: "Cartitems not found" });
+    }
+    console.log(cartItems, "cartttthshbnxn");
+    const count = cartItems.reduce((total, item) => total + item.quantity, 0);
+    console.log(count, "mnumberrrer");
+    return res
+      .status(200)
+      .json({ message: "Successfully got count", Count: count });
+  } catch (error) {
+    console.log(error);
   }
 }
 
@@ -318,4 +377,6 @@ module.exports = {
   filterBasedOnStatus,
   cancelAndDelivered,
   ordersInRestaurant,
+  getAllOrders,
+  orderItemsCount,
 };

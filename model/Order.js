@@ -1,7 +1,7 @@
 const EntitySchema = require("typeorm").EntitySchema;
 const { paymentMethods } = require("../enum/paymentMethod.js");
 const { paymentStatus } = require("../enum/paymentStatus.js");
-const { orderStatus } = require("../enum/OrderStatus.js");
+const { orderStatus } = require("../enum/orderStatus.js");
 
 const Order = new EntitySchema({
   name: "Order",
@@ -14,8 +14,8 @@ const Order = new EntitySchema({
     },
     orderStatus: {
       type: "enum",
-      enum: orderStatus,
-      default: orderStatus.PENDING,
+        enum: orderStatus, 
+        default: orderStatus.PENDING
     },
     totalPrice: {
       type: "float",

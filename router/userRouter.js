@@ -21,6 +21,7 @@ const {
   createOrder,
   paymentSuccess,
   cancelOrder,
+  getAllOrders,
 } = require("../controller/orderController.js");
 
 const router = express.Router();
@@ -35,7 +36,7 @@ router.post("/accessToken", createAccessToken);
 
 router.post("/createCart/:userId", authentication, createCart);
 
-router.get("/getCart/:userId",authentication, getCart);
+router.get("/getCart/:userId", authentication, getCart);
 
 router.delete("/deleteCart/:cartId", authentication, deleteCart);
 
@@ -45,13 +46,15 @@ router.post("/addToCart/:userId/:cartId/:foodId", authentication, addToCart);
 
 // router.patch("/updateQuantity/:userId/:itemId", authentication, updateQuantity);
 
-router.get("/getAllCartItems/:cartId",getAllCartItems);
+router.get("/getAllCartItems/:cartId", getAllCartItems);
 
 router.patch("/updateCartItem/:cartItemId", authentication, updateCartItem);
 
 router.post("/createOrder", createOrder);
 
 router.post("/paymentSuccess/:userId/:cartId", authentication, paymentSuccess);
+
+router.get("/allOrderItems/:userId/:orderId",authentication, getAllOrders);
 
 router.patch("/updateRating/:userId/:itemId", authentication, updateRating);
 

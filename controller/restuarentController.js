@@ -28,13 +28,12 @@ async function signUp(req, res) {
     } = req.body;
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
-    const restuarentData=await restaurantRepository.findOne({
-      where:{restaurantName:restaurantName}
-    })
+    const restuarentData = await restaurantRepository.findOne({
+      where: { restaurantName: restaurantName },
+    });
 
-    if(restuarentData)
-    {
-      return res.status(400).json({message:"Restaurant already exist"})
+    if (restuarentData) {
+      return res.status(400).json({ message: "Restaurant already exist" });
     }
 
     const encodedPassword = await encrypt.encryptPass(restaurantPassword);
@@ -53,7 +52,7 @@ async function signUp(req, res) {
     const ratingRepository = dataSource.getRepository("Rating");
     const savedRating = await ratingRepository.save(rating);
 
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toISOString().split("T")[0];
 
     const openingDateTime = new Date(`${currentDate}T${openingTime}:00+05:30`);
     const closingDateTime = new Date(`${currentDate}T${closingTime}:00+05:30`);
@@ -88,7 +87,7 @@ async function signUp(req, res) {
 
     return res.status(201).json({
       message: "Restuarent created successfully",
-      Data:restaurant,
+      Data: restaurant,
       AccessToken: accessToken,
       RefreshToken: refreshToken,
     });
@@ -96,7 +95,6 @@ async function signUp(req, res) {
     return res.status(500).json({ message: "Restuarent creation failed" });
   }
 }
-
 
 async function login(req, res) {
   try {
@@ -126,7 +124,7 @@ async function login(req, res) {
     }
     return res.status(200).json({
       message: "Restuarent Login Successfully",
-      Data:restaurant,
+      Data: restaurant,
       AccessToken: accessToken,
       RefreshToken: refreshToken,
     });
@@ -155,50 +153,65 @@ async function deleteRestuarent(req, res) {
   }
 }
 
+
 async function updateRestuarent(req, res) {
   try {
-    const { id, restaurantStatus } = req.params;
 
-    const restaurantRepository = dataSource.getRepository("Restaurant");
-    const restaurant = await restaurantRepository.findOne({
-      where: { id: id },
+    await new Promise((resolve, reject) => {
+      upload.single("restaurantImg")(req, res, (err) => {
+        if (err) {
+          return reject(err);
+        } else {
+          return resolve();
+        }
+      });
     });
+    console.log("anugsrsnns");
+
+    const { id } = req.params;
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    console.log("2 dhjaaa");
+
+    const restaurant = await restaurantRepository.findOne({ where: { id } });
     if (!restaurant) {
       return res
         .status(404)
-        .json({ message: `Restuarent with this id ${id} not found` });
+        .json({ message: `Restaurant with this ID ${id} not found` });
     }
 
-    restaurant.restaurantName = req.body.restaurantName
-      ? req.body.restaurantName
-      : restaurant.restaurantName;
+    let imageUrl = restaurant.restaurantImg;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path);
+      imageUrl = result.url;
+    }
 
-    restaurant.restaurantImg = req.body.restaurantImg
-      ? req.body.restaurantImg
-      : restaurant.restaurantImg;
+    const currentDate = new Date().toISOString().split("T")[0];
 
-    restaurant.restaurantStatus = req.body.restaurantStatus
-      ? req.body.restaurantStatus
-      : restaurant.restaurantStatus;
-
+    restaurant.restaurantName =
+      req.body.restaurantName || restaurant.restaurantName;
+    restaurant.restaurantImg = imageUrl || restaurant.restaurantImg;
+    restaurant.restaurantStatus =
+      req.body.restaurantStatus || restaurant.restaurantStatus;
     restaurant.openingTime = req.body.openingTime
-      ? req.body.openingTime
+      ? new Date(`${currentDate}T${req.body.openingTime}:00+05:30`)
       : restaurant.openingTime;
-
     restaurant.closingTime = req.body.closingTime
-      ? req.body.closingTime
+      ? new Date(`${currentDate}T${req.body.closingTime}:00+05:30`)
       : restaurant.closingTime;
-
-    restaurant.modifiedBy = restaurant.restaurantName;
+    restaurant.modifiedBy = req.body.modifiedBy || restaurant.restaurantName;
     restaurant.modifiedOn = new Date();
-
+    console.log(restaurant, "restaurant dataaaa");
+ 
     await restaurantRepository.save(restaurant);
+    console.log("saved");
+
     return res.status(200).json({
-      message: "Resturent successfully updated",
+      message: "Restaurant successfully updated",
       Data: restaurant,
     });
   } catch (error) {
-    return res.status(403).json({ message: "Failed update the restuarent" });
+    console.error(error);
+    return res.status(500).json({ message: "Failed to update the restaurant" });
   }
 }
 

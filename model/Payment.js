@@ -14,6 +14,7 @@ const Payment = new EntitySchema({
     razorpayPaymentId: {
       type: "varchar",
       unique: true,
+      nullable:true
     },
     razorpayOrderId: {
       type: "varchar",
@@ -21,10 +22,11 @@ const Payment = new EntitySchema({
     },
     razorpaySignature: {
       type: "varchar",
+      nullable:true
     },
     paymentMethods: {
         type: "enum",
-        enum: paymentMethods,
+        enum: Object.values(paymentMethods),
       },
     createdOn: {
       type: "varchar",
