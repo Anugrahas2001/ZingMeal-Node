@@ -54,9 +54,38 @@ async function signUp(req, res) {
 
     const currentDate = new Date().toISOString().split("T")[0];
 
-    const openingDateTime = new Date(`${currentDate}T${openingTime}:00+05:30`);
-    const closingDateTime = new Date(`${currentDate}T${closingTime}:00+05:30`);
-    // console.log(openingDateTime,closingDateTime,"going save")
+    // Convert openingTime to 24-hour format
+    let [openingHour, openingMinutes] = openingTime.split(":").map(Number);
+    if (openingHour === 12) {
+      openingHour = 0; // Convert 12 AM to 00:00
+    }
+    if (openingHour < 12) {
+      // No change needed for AM times except 12 AM
+      // No action needed for hours between 1 and 11 AM
+    } else {
+      openingHour -= 12; // Convert PM hours to 24-hour format
+    }
+    const formattedOpeningTime = `${openingHour
+      .toString()
+      .padStart(2, "0")}:${openingMinutes.toString().padStart(2, "0")}`;
+
+    // Convert closingTime to 24-hour format
+    let [closingHour, closingMinutes] = closingTime.split(":").map(Number);
+    if (closingHour === 12) {
+      closingHour = 12; // 12 PM remains 12:00
+    } else if (closingHour < 12) {
+      closingHour += 12; // Convert AM hours to PM (except 12 AM)
+    }
+    const formattedClosingTime = `${closingHour
+      .toString()
+      .padStart(2, "0")}:${closingMinutes.toString().padStart(2, "0")}`;
+
+    const openingDateTime = new Date(
+      `${currentDate}T${formattedOpeningTime}:00+05:30`
+    );
+    const closingDateTime = new Date(
+      `${currentDate}T${formattedClosingTime}:00+05:30`
+    );
 
     const restaurant = {
       id: restaurantId,
@@ -83,7 +112,6 @@ async function signUp(req, res) {
       itemId: restaurant.id,
     };
     await tokenRepository.save(token);
-    // console.log(restaurant,"daata")
 
     return res.status(201).json({
       message: "Restuarent created successfully",
@@ -92,7 +120,7 @@ async function signUp(req, res) {
       RefreshToken: refreshToken,
     });
   } catch (error) {
-    return res.status(500).json({ message: "Restuarent creation failed" });
+    return res.status(403).json({ message: "Restuarent creation failed" });
   }
 }
 
@@ -153,10 +181,68 @@ async function deleteRestuarent(req, res) {
   }
 }
 
+// async function updateRestuarent(req, res) {
+//   try {
+//     await new Promise((resolve, reject) => {
+//       upload.single("restaurantImg")(req, res, (err) => {
+//         if (err) {
+//           return reject(err);
+//         } else {
+//           return resolve();
+//         }
+//       });
+//     });
+//     console.log("anugsrsnns");
+
+//     const { id } = req.params;
+//     const restaurantRepository = dataSource.getRepository("Restaurant");
+//     console.log("2 dhjaaa");
+
+//     const restaurant = await restaurantRepository.findOne({ where: { id } });
+//     if (!restaurant) {
+//       return res
+//         .status(404)
+//         .json({ message: `Restaurant with this ID ${id} not found` });
+//     }
+
+//     let imageUrl = restaurant.restaurantImg;
+//     if (req.file) {
+//       const result = await cloudinary.uploader.upload(req.file.path);
+//       imageUrl = result.url;
+//     }
+
+//     const currentDate = new Date().toISOString().split("T")[0];
+
+//     restaurant.restaurantName =
+//       req.body.restaurantName || restaurant.restaurantName;
+//     restaurant.restaurantImg = imageUrl || restaurant.restaurantImg;
+//     restaurant.restaurantStatus =
+//       req.body.restaurantStatus || restaurant.restaurantStatus;
+//     restaurant.openingTime = req.body.openingTime
+//       ? new Date(`${currentDate}T${req.body.openingTime}:00+05:30`)
+//       : restaurant.openingTime;
+//     restaurant.closingTime = req.body.closingTime
+//       ? new Date(`${currentDate}T${req.body.closingTime + 12}:00+05:30`)
+//       : restaurant.closingTime;
+//     restaurant.modifiedBy = req.body.modifiedBy || restaurant.restaurantName;
+//     restaurant.modifiedOn = new Date();
+//     console.log(restaurant, "restaurant dataaaa");
+
+//     await restaurantRepository.save(restaurant);
+//     console.log("saved");
+
+//     return res.status(200).json({
+//       message: "Restaurant successfully updated",
+//       Data: restaurant,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Failed to update the restaurant" });
+//   }
+// }
 
 async function updateRestuarent(req, res) {
   try {
-
     await new Promise((resolve, reject) => {
       upload.single("restaurantImg")(req, res, (err) => {
         if (err) {
@@ -166,11 +252,9 @@ async function updateRestuarent(req, res) {
         }
       });
     });
-    console.log("anugsrsnns");
 
     const { id } = req.params;
     const restaurantRepository = dataSource.getRepository("Restaurant");
-    console.log("2 dhjaaa");
 
     const restaurant = await restaurantRepository.findOne({ where: { id } });
     if (!restaurant) {
@@ -192,18 +276,54 @@ async function updateRestuarent(req, res) {
     restaurant.restaurantImg = imageUrl || restaurant.restaurantImg;
     restaurant.restaurantStatus =
       req.body.restaurantStatus || restaurant.restaurantStatus;
-    restaurant.openingTime = req.body.openingTime
-      ? new Date(`${currentDate}T${req.body.openingTime}:00+05:30`)
-      : restaurant.openingTime;
-    restaurant.closingTime = req.body.closingTime
-      ? new Date(`${currentDate}T${req.body.closingTime}:00+05:30`)
-      : restaurant.closingTime;
+
+    if (req.body.openingTime) {
+      let [openingHour, openingMinutes] = req.body.openingTime
+        .split(":")
+        .map(Number);
+
+      openingMinutes = isNaN(openingMinutes) ? 0 : openingMinutes;
+
+      if (openingHour === 12) openingHour = 0;
+
+      if (openingHour < 0 || openingHour > 12) {
+        return res.status(400).json({ message: "Invalid opening hour" });
+      }
+
+      const formattedOpeningTime = `${openingHour
+        .toString()
+        .padStart(2, "0")}:${openingMinutes.toString().padStart(2, "0")}`;
+      restaurant.openingTime = new Date(
+        `${currentDate}T${formattedOpeningTime}:00+05:30`
+      );
+    }
+
+    if (req.body.closingTime) {
+      let [closingHour, closingMinutes] = req.body.closingTime
+        .split(":")
+        .map(Number);
+
+      closingMinutes = isNaN(closingMinutes) ? 0 : closingMinutes;
+
+      if (closingHour < 12) closingHour += 12;
+      if (closingHour === 24) closingHour = 12;
+
+      if (closingHour < 12 || closingHour > 23) {
+        return res.status(400).json({ message: "Invalid closing hour" });
+      }
+
+      const formattedClosingTime = `${closingHour
+        .toString()
+        .padStart(2, "0")}:${closingMinutes.toString().padStart(2, "0")}`;
+      restaurant.closingTime = new Date(
+        `${currentDate}T${formattedClosingTime}:00+05:30`
+      );
+    }
+
     restaurant.modifiedBy = req.body.modifiedBy || restaurant.restaurantName;
     restaurant.modifiedOn = new Date();
-    console.log(restaurant, "restaurant dataaaa");
- 
+
     await restaurantRepository.save(restaurant);
-    console.log("saved");
 
     return res.status(200).json({
       message: "Restaurant successfully updated",

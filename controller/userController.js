@@ -13,14 +13,15 @@ async function signUp(req, res) {
     const { email, password } = req.body;
     const encodedPassword = await encrypt.encryptPass(password);
 
-    const userRepository=dataSource.getRepository("User");
-    const userFromDb=await userRepository.findOne({
-      where:{email:email}
-    })
+    const userRepository = dataSource.getRepository("User");
+    const userFromDb = await userRepository.findOne({
+      where: { email: email },
+    });
 
-    if(userFromDb)
-    {
-      return res.status(400).json({message:"User with this email is already present"})
+    if (userFromDb) {
+      return res
+        .status(400)
+        .json({ message: "User with this email is already present" });
     }
 
     const user = {
@@ -86,7 +87,7 @@ async function login(req, res) {
     const refreshToken = encrypt.generateRefreshToken({ id: user.id });
     return res.status(200).json({
       meassage: "Login successfull",
-      Data:user,
+      Data: user,
       accessToken: accessToken,
       refreshToken: refreshToken,
     });
@@ -97,31 +98,47 @@ async function login(req, res) {
 async function searchByRestuarantOrFood(req, res) {
   try {
     const { query } = req.params;
+    const uniqueRestaurantsMap = new Map();
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
-    const restaurant = await restaurantRepository.find({
+    const restaurants = await restaurantRepository.find({
       where: { restaurantName: ILike(`%${query}%`) },
     });
 
-    if (restaurant.length > 0) {
+    if (restaurants.length > 0) {
+      restaurants.forEach((restaurant) => {
+        uniqueRestaurantsMap.set(restaurant.id, restaurant);
+      });
+
+      const restaurantsArray = Array.from(uniqueRestaurantsMap.values());
+
       return res
         .status(200)
-        .json({ message: "Success Restaurant", Data: restaurant });
+        .json({ message: "Success Restaurant", Data: restaurantsArray });
     }
 
     const foodRepository = dataSource.getRepository("Food");
-    const food = await foodRepository.find({
+    const foods = await foodRepository.find({
       where: { foodName: ILike(`%${query}%`) },
       relations: ["restaurant"],
     });
 
-    if (food.length > 0) {
-      const uniqueRestaurants = food
-        .map(item => item.restaurant)
+    if (foods.length > 0) {
+      foods.forEach((food) =>
+        uniqueRestaurantsMap.set(
+          food.restaurant.id,
+          food.restaurant
+        )
+      );
 
+      // const restaurantsArray = Array.from(uniqueRestaurantsMap.entries()).map(
+      //   ([id, name]) => ({ id, name })
+      // );
+      const restaurantsArray = Array.from(uniqueRestaurantsMap.values());
+      
       return res
         .status(200)
-        .json({ message: "Success Food", Data: uniqueRestaurants });
+        .json({ message: "Success Food", Data: restaurantsArray });
     }
 
     return res.status(404).json({ message: "Not found", Data: [] });
@@ -130,7 +147,6 @@ async function searchByRestuarantOrFood(req, res) {
     return res.status(403).json({ message: "Failed" });
   }
 }
-
 
 async function createAccessToken(req, res) {
   const { refreshToken } = req.body;

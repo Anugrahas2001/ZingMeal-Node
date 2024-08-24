@@ -45,4 +45,8 @@ async function updateRating(req, res) {
   }
 }
 
+async function getRatingById(req,res){
+  const {itemId}=req.params;
+}
+
 module.exports = { updateRating };

@@ -115,18 +115,20 @@ async function getAllFoods(req, res) {
 
 async function getFoodById(req, res) {
   try {
-    const { id } = req.params.id;
+    const { id } = req.params;
+    console.log(id, "id dataa");
 
     const foodRepository = dataSource.getRepository("Food");
     const food = await foodRepository.findOne({
-      where: { id },
+      where: { id: id },
     });
+    console.log(food, "food dataa");
     if (!food) {
       return res
         .status(404)
         .json({ message: `food not found with this is ${id}` });
     }
-
+    console.log("success");
     return res
       .status(200)
       .json({ message: "Food item successfully retrieved", food });
@@ -220,28 +222,39 @@ async function deleteFood(req, res) {
     const foodRepository = dataSource.getRepository("Food");
     const orderItemRepository = dataSource.getRepository("OrderItem");
     // const orderRepository = dataSource.getRepository("Order");
+    const cartItemRepository = dataSource.getRepository("CartItem");
     const food = await foodRepository.findOne({
       where: { id: foodId },
     });
+    console.log(food, "food dataa");
 
     if (!food) {
       return res
         .status(404)
         .json({ message: `food item not found with this id ${foodId}` });
     }
+
+    const cartItems = await cartItemRepository.find({
+      where: { food: { id: foodId } },
+    });
+    console.log(cartItems, "item dataaa");
+    if (cartItems.length > 0) {
+      return res.status(400).json({
+        message: "cant delete this item it is asssociated with the cart",
+      });
+    }
     const orderItems = await orderItemRepository.find({
       where: { food: { id: foodId } },
     });
-    if (orderItems) {
-      return res
-        .status(400)
-        .json({
-          message: "Can't delete this food as it related to some orders",
-          Data: orderItems,
-        });
+    console.log(orderItems, "order itemsss");
+    if (orderItems.length > 0) {
+      return res.status(400).json({
+        message: "Can't delete this food as it related to some orders",
+        Data: orderItems,
+      });
     }
-
-    await foodRepository.remove(food);
+    console.log(orderItems.length, "length");
+    await foodRepository.delete({ id: foodId });
     console.log("Food deleted");
 
     return res.status(200).json({ message: "Food item deleted successfully" });
@@ -249,52 +262,6 @@ async function deleteFood(req, res) {
     return res.status(500).json({ message: "Failed to delete food item" });
   }
 }
-
-// async function deleteFood(req, res) {
-//   try {
-//     const { foodId } = req.params;
-//     console.log(foodId, "food id");
-
-//     const foodRepository = dataSource.getRepository("Food");
-//     const orderItemRepository = dataSource.getRepository("OrderItem");
-//     const orderRepository = dataSource.getRepository("Order");
-//     const food = await foodRepository.findOne({
-//       where: { id: foodId },
-//     });
-
-//     if (!food) {
-//       return res
-//         .status(404)
-//         .json({ message: `food item not found with this id ${foodId}` });
-//     }
-
-// console.log("ddhdn")
-// const orderItems=await orderItemRepository.find({
-//   where:{ food: { id: foodId } },
-//   relations:["order"]
-// })
-// const orderIds=[...new Set(orderItems.map((item)=>item.order.id))]
-
-// const orders = await orderRepository.findByIds(orderIds);
-
-//     if (!orders) {
-//       return res.status(404).json({ message: "Order not found" });
-//     }
-//     if (orders.length === 0) {
-//       return res.status(404).json({ message: "No associated orders found" });
-//     }
-
-//     console.log(orders,"dataaa")
-//     await orderRepository.delete(orders);
-//     console.log( "food dataa");
-//     await foodRepository.remove(food);
-//     console.log("Food deleted");
-
-//     return res.status(200).json({ message: "Food item deleted successfully" });
-//   } catch (error) {
-//     return res.status(500).json({ message: "Failed to delete food item" });
-//   }
-// }
 
 async function getAllFoodsBasedOnRestaurant(req, res) {
   try {
@@ -326,20 +293,41 @@ async function getAllFoodsBasedOnRestaurant(req, res) {
 
 async function getFoodsBasedOnType(req, res) {
   try {
-    const { foodType } = req.params;
+    const { foodType, restaurantId } = req.params;
 
-    const foodRepository = dataSource.getRepository("Food");
-    const foods = await foodRepository.find({
-      where: { foodType: foodType },
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: restaurantId },
     });
 
-    if (foods.length === 0) {
-      return res.status(404).json({ message: "Item not found" });
+    if (!restaurant) {
+      return res.status(404).json({ message: "restaurant not found" });
     }
 
-    return res
-      .status(200)
-      .json({ message: "successfully retrieved all foods", Data: foods });
+    const foodRepository = dataSource.getRepository("Food");
+    const allFoods = await foodRepository.find({
+      // where: { foodType: foodType },
+      where: { restaurant: { id: restaurantId } },
+    });
+
+    if (allFoods.length === 0) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+    console.log(allFoods, "dgshh");
+
+    const foodWithType = allFoods.filter((food) => food.foodType === foodType);
+    console.log(foodWithType, "fooodsss");
+
+    if (foodWithType === 0) {
+      return res
+        .status(500)
+        .json({ message: "Faailed to retrieve food with type" });
+    }
+
+    return res.status(200).json({
+      message: "successfully retrieved all foods",
+      Data: foodWithType,
+    });
   } catch (error) {
     return res.status(403).json({ message: "Failed to retrieve food" });
   }
@@ -352,7 +340,9 @@ async function getAllFoodsBasedOnCategory(req, res) {
     const foodRepository = dataSource.getRepository("Food");
     const allFoods = await foodRepository.find({
       where: { foodCategory: category },
+      relations: ["restaurant"],
     });
+    console.log(allFoods, "all foods");
     if (allFoods.length == 0) {
       return res.status(404).json({ message: "Item not found" });
     }

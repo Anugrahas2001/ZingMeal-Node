@@ -54,7 +54,7 @@ router.get(
   getAllFoodsBasedOnRestaurant
 );
 
-router.get("/foodByType/:foodType", getFoodsBasedOnType);
+router.get("/foodByType/:restaurantId/:foodType", getFoodsBasedOnType);
 
 router.get("/foodsByCategory/:category", getAllFoodsBasedOnCategory);
 
