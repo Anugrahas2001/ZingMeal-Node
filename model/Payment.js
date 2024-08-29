@@ -29,8 +29,9 @@ const Payment = new EntitySchema({
         enum: Object.values(paymentMethods),
       },
     createdOn: {
-      type: "varchar",
+      type: "timestamp",
       nullable: false,
+
     },
   },
   relations: {

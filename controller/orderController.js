@@ -2,7 +2,8 @@ const cuid = require("cuid");
 const { dataSource } = require("../db/connection.js");
 const { paymentStatus } = require("../enum/paymentStatus.js");
 const { paymentMethods } = require("../enum/paymentMethod.js");
-const { formatInTimeZone } = require("date-fns-tz");
+const moment = require("moment");
+// const { formatInTimeZone } = require("date-fns-tz");
 const { Payment } = require("../model/Payment.js");
 const { orderStatus } = require("../enum/orderStatus.js");
 const dotenv = require("dotenv");
@@ -197,6 +198,8 @@ async function cancelOrder(req, res) {
         where: { order: { id: orderId } },
       });
 
+      // console.log(moment().format('LT'),"timee");
+
       const currentTime = new Date().getTime();
       const createdTime = order.createdOn.getTime();
       const timeDifferenceInMn = (currentTime - createdTime) / (1000 * 60);
@@ -269,11 +272,6 @@ async function cancelAndDelivered(req, res) {
     console.log(orders, "1");
 
     const filteredOrders = orders.filter((order) => {
-      // const currentTime = new Date().getTime();
-      // const createdTime = order.createdOn.getTime();
-      // const timeDifferenceInHr = (currentTime - createdTime) / (1000 * 60 * 60);
-      // console.log(timeDifferenceInHr, "diffrence 2");
-
       return (
         order.orderStatus === orderStatus.CANCELLED ||
         order.orderStatus === orderStatus.DELIVERED
@@ -292,6 +290,7 @@ async function cancelAndDelivered(req, res) {
 
 async function ordersInRestaurant(req, res) {
   try {
+    console.log();
     const { restaurantId } = req.params;
     console.log(restaurantId);
     const orderRepository = dataSource.getRepository("Order");

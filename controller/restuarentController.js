@@ -60,16 +60,14 @@ async function signUp(req, res) {
       openingHour = 0; // Convert 12 AM to 00:00
     }
     if (openingHour < 12) {
-      // No change needed for AM times except 12 AM
-      // No action needed for hours between 1 and 11 AM
+
     } else {
-      openingHour -= 12; // Convert PM hours to 24-hour format
+      openingHour -= 12;
     }
     const formattedOpeningTime = `${openingHour
       .toString()
       .padStart(2, "0")}:${openingMinutes.toString().padStart(2, "0")}`;
 
-    // Convert closingTime to 24-hour format
     let [closingHour, closingMinutes] = closingTime.split(":").map(Number);
     if (closingHour === 12) {
       closingHour = 12; // 12 PM remains 12:00
@@ -187,8 +185,8 @@ async function login(req, res) {
     return res.status(200).json({
       message: "Restuarent Login Successfully",
       Data: restaurant,
-      AccessToken: accessToken,
-      RefreshToken: refreshToken,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
     });
   } catch (error) {
     return res.status(403).json({ message: "Login failed" });

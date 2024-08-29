@@ -38,7 +38,7 @@ const Order = new EntitySchema({
       nullable: true,
     },
     createdOn: {
-      type: "timestamptz",
+      type: "timestamp",
       nullable: true,
     },
     modifiedBy: {
@@ -46,7 +46,7 @@ const Order = new EntitySchema({
       nullable: true,
     },
     modifiedOn: {
-      type: "timestamptz",
+      type: "timestamp",
       nullable: true,
     },
   },

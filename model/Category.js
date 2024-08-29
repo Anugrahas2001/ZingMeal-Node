@@ -18,7 +18,7 @@ const Category = new EntitySchema({
       nullable: true,
     },
     createdOn: {
-      type: "timestamptz",
+      type: "timestamp",
       nullable: true,
     },
   },
