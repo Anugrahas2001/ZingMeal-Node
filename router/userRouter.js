@@ -5,6 +5,7 @@ const {
   login,
   searchByRestuarantOrFood,
   createAccessToken,
+  logOut,
 } = require("../controller/userController.js");
 const {
   addToCart,
@@ -30,11 +31,13 @@ router.post("/signUp", signUp);
 
 router.post("/login", login);
 
+router.delete("/logout/:id",authentication,logOut);
+
 router.get("/search/:query", searchByRestuarantOrFood);
 
 router.post("/accessToken", createAccessToken);
 
-router.post("/createCart/:userId", authentication, createCart);
+router.post("/createCart/:userId", createCart);
 
 router.get("/getCart/:userId", authentication, getCart);
 

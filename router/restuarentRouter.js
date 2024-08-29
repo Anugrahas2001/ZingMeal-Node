@@ -7,6 +7,7 @@ const {
   updateRestuarent,
   getAllRestuarents,
   getRestaurantById,
+  logOut,
 } = require("../controller/restuarentController.js");
 const {
   createFood,
@@ -34,6 +35,8 @@ const {
 router.post("/signUp", signUp);
 
 router.post("/login", login);
+
+router.delete("/logOut/:id", logOut);
 
 router.get("/getRestaurant/:id", getRestaurantById);
 

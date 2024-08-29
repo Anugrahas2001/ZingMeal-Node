@@ -127,6 +127,7 @@ async function signUp(req, res) {
 async function login(req, res) {
   try {
     const { restaurantName, restaurantPassword } = req.body;
+    console.log(restaurantName, restaurantPassword, "credentials");
 
     if (!restaurantName || !restaurantPassword) {
       return res.status(401).json({ message: "Invalid Credentials" });
@@ -135,7 +136,7 @@ async function login(req, res) {
     const restaurant = await restaurantRepository.findOne({
       where: { restaurantName },
     });
-
+    console.log(restaurant, "hotel");
     const isValidPassword = await encrypt.comparePassword(
       restaurantPassword,
       restaurant.restaurantPassword
@@ -150,6 +151,39 @@ async function login(req, res) {
     if (!accessToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
+    console.log(accessToken, refreshToken, "token");
+    const tokenRepository = dataSource.getRepository("RefreshToken");
+
+    const tokenData = await tokenRepository.findOne({
+      where: { itemId: restaurant.id },
+    });
+    console.log(tokenData, "data from token");
+    if (!tokenData) {
+      console.log("token is not there");
+      const token = {
+        id: cuid(),
+        token: refreshToken,
+        itemId: restaurant.id,
+        createdBy: restaurant.restaurantName,
+        createdOn: new Date(),
+      };
+      await tokenRepository.save(token);
+      console.log(token, "saved");
+      return res.status(200).json({
+        meassage: "Login successfull",
+        Data: restaurant,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      });
+    }
+
+    tokenData.token = refreshToken;
+    tokenData.modifiedBy = restaurant.restaurantName;
+    tokenData.modifiedOn = new Date();
+
+    await tokenRepository.save(tokenData);
+    console.log("Refresh token updated and saved");
+
     return res.status(200).json({
       message: "Restuarent Login Successfully",
       Data: restaurant,
@@ -180,66 +214,6 @@ async function deleteRestuarent(req, res) {
     return res.status(403).json({ message: "Failed to delete restuarent" });
   }
 }
-
-// async function updateRestuarent(req, res) {
-//   try {
-//     await new Promise((resolve, reject) => {
-//       upload.single("restaurantImg")(req, res, (err) => {
-//         if (err) {
-//           return reject(err);
-//         } else {
-//           return resolve();
-//         }
-//       });
-//     });
-//     console.log("anugsrsnns");
-
-//     const { id } = req.params;
-//     const restaurantRepository = dataSource.getRepository("Restaurant");
-//     console.log("2 dhjaaa");
-
-//     const restaurant = await restaurantRepository.findOne({ where: { id } });
-//     if (!restaurant) {
-//       return res
-//         .status(404)
-//         .json({ message: `Restaurant with this ID ${id} not found` });
-//     }
-
-//     let imageUrl = restaurant.restaurantImg;
-//     if (req.file) {
-//       const result = await cloudinary.uploader.upload(req.file.path);
-//       imageUrl = result.url;
-//     }
-
-//     const currentDate = new Date().toISOString().split("T")[0];
-
-//     restaurant.restaurantName =
-//       req.body.restaurantName || restaurant.restaurantName;
-//     restaurant.restaurantImg = imageUrl || restaurant.restaurantImg;
-//     restaurant.restaurantStatus =
-//       req.body.restaurantStatus || restaurant.restaurantStatus;
-//     restaurant.openingTime = req.body.openingTime
-//       ? new Date(`${currentDate}T${req.body.openingTime}:00+05:30`)
-//       : restaurant.openingTime;
-//     restaurant.closingTime = req.body.closingTime
-//       ? new Date(`${currentDate}T${req.body.closingTime + 12}:00+05:30`)
-//       : restaurant.closingTime;
-//     restaurant.modifiedBy = req.body.modifiedBy || restaurant.restaurantName;
-//     restaurant.modifiedOn = new Date();
-//     console.log(restaurant, "restaurant dataaaa");
-
-//     await restaurantRepository.save(restaurant);
-//     console.log("saved");
-
-//     return res.status(200).json({
-//       message: "Restaurant successfully updated",
-//       Data: restaurant,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ message: "Failed to update the restaurant" });
-//   }
-// }
 
 async function updateRestuarent(req, res) {
   try {
@@ -366,9 +340,35 @@ async function getRestaurantById(req, res) {
   }
 }
 
+async function logOut(req, res) {
+  try {
+    const { id } = req.params;
+    console.log(id, "idddd");
+
+    const restaurantRepository = dataSource.getRepository("Restaurant");
+    const restaurant = await restaurantRepository.findOne({
+      where: { id: id },
+    });
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+    console.log(restaurant, "restaurantttt");
+    const tokenRepository = dataSource.getRepository("RefreshToken");
+    const token = await tokenRepository.findOne({
+      where: { itemId: id },
+    });
+    console.log(token, "refresh tokennn");
+    await tokenRepository.remove(token);
+    return res.status(200).json({ message: "user logout successfully" });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 module.exports = {
   signUp,
   login,
+  logOut,
   getAllRestuarents,
   updateRestuarent,
   deleteRestuarent,

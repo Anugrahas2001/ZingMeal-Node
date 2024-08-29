@@ -8,6 +8,7 @@ const { orderStatus } = require("../enum/orderStatus.js");
 const dotenv = require("dotenv");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const { In } = require("typeorm");
 dotenv.config();
 
 async function createOrder(req, res) {
@@ -161,7 +162,7 @@ async function updateOrderStatus(req, res) {
 
     if (order) {
       order.orderStatus = orderStatus || order.orderStatus;
-      order.modifiedBy = restaurant ? restaurant.restaurantName : "Unknown";
+      order.modifiedBy = restaurant.restaurantName;
       order.modifiedOn = new Date();
 
       await orderRepository.save(order);
@@ -201,21 +202,25 @@ async function cancelOrder(req, res) {
       const timeDifferenceInMn = (currentTime - createdTime) / (1000 * 60);
       console.log(timeDifferenceInMn, "in minutess");
 
-      if (timeDifferenceInMn < 30 && order.orderStatus === "PREPARING") {
-        // await Promise.all(
-        //   allOrderItems.map((item) => orderItemRepository.remove(item))
-        // );
-        if (payment) await paymentRepository.remove(payment);
-        // await orderRepository.remove(order);
-        order.orderStatus = orderStatus.CANCELLED;
-        await orderRepository.save(order);
-        console.log("saved");
+      if (timeDifferenceInMn < 30) {
+        if (order.orderStatus === "PREPARING") {
+          if (payment) await paymentRepository.remove(payment);
+          order.orderStatus = orderStatus.CANCELLED;
+          await orderRepository.save(order);
+          console.log("saved");
 
-        return res
-          .status(200)
-          .json({ message: "Order cancelled successfully", Data: order });
+          return res
+            .status(200)
+            .json({ message: "Order cancelled successfully", Data: order });
+        } else {
+          return res.status(200).json({
+            message: `Can't cancel this order.Food order already ${order.orderStatus}.`,
+          });
+        }
       } else {
-        return res.status(400).json({ message: "Can't cancel this order" });
+        return res.status(400).json({
+          message: `Order can only be cancelled within 30 minutes of being placed`,
+        });
       }
     } else {
       return res.status(404).json({ message: "Order not found" });
@@ -229,37 +234,23 @@ async function filterBasedOnStatus(req, res) {
   try {
     const orderRepository = dataSource.getRepository("Order");
     const allOrders = await orderRepository.find({
+      where: {
+        orderStatus: In([
+          orderStatus.PREPARING,
+          orderStatus.PACKED,
+          orderStatus.DISPATCHED,
+        ]),
+      },
       relations: ["orderItems", "orderItems.food"],
     });
+    console.log(allOrders, "datat pre,pack,dis");
 
-    const sortedOrders = allOrders.sort((order1, order2) => {
-      if (
-        order1.orderStatus === orderStatus.PREPARING &&
-        order2.orderStatus !== orderStatus.PREPARING
-      ) {
-        return -1;
-      }
-      if (
-        order2.orderStatus === orderStatus.PREPARING &&
-        order1.orderStatus !== orderStatus.PREPARING
-      ) {
-        return 1;
-      }
-      return order2.createdOn - order1.createdOn;
-    });
+    const order = ["PREPARING", "PACKED", "DISPATCHED"];
 
-    await Promise.all(
-      sortedOrders.map(async (order) => {
-        const orderItemRepository = dataSource.getRepository("OrderItem");
-        const orderItems = await orderItemRepository.find({
-          where: { order: { id: order.id } },
-          relations: ["food"],
-        });
-        return orderItems;
-      })
+    const sortedOrders = allOrders.sort(
+      (x, y) => order.indexOf(x.orderStatus) - order.indexOf(y.orderStatus)
     );
-
-    console.log(sortedOrders, "sorted orders");
+    console.log(sortedOrders, "sorted");
 
     return res.status(200).json({ sortedOrders });
   } catch (error) {
@@ -278,19 +269,22 @@ async function cancelAndDelivered(req, res) {
     console.log(orders, "1");
 
     const filteredOrders = orders.filter((order) => {
-      const currentTime = new Date().getTime();
-      const createdTime = order.createdOn.getTime();
-      const timeDifferenceInHr = (currentTime - createdTime) / (1000 * 60 * 60);
-      console.log(timeDifferenceInHr, "diffrence 2");
+      // const currentTime = new Date().getTime();
+      // const createdTime = order.createdOn.getTime();
+      // const timeDifferenceInHr = (currentTime - createdTime) / (1000 * 60 * 60);
+      // console.log(timeDifferenceInHr, "diffrence 2");
 
       return (
-        (order.orderStatus === orderStatus.CANCELLED &&
-          timeDifferenceInHr > 24) ||
+        order.orderStatus === orderStatus.CANCELLED ||
         order.orderStatus === orderStatus.DELIVERED
       );
     });
+    const sortedOrders = filteredOrders.sort(
+      (a, b) =>
+        new Date(b.createdOn).getTime() - new Date(a.createdOn).getTime()
+    );
 
-    return res.status(200).json({ Data: filteredOrders });
+    return res.status(200).json({ Data: sortedOrders });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch orders" });
   }
@@ -301,7 +295,6 @@ async function ordersInRestaurant(req, res) {
     const { restaurantId } = req.params;
     console.log(restaurantId);
     const orderRepository = dataSource.getRepository("Order");
-    console.log("shjsj", orderRepository);
     const orders = await orderRepository.find({
       where: { orderItems: { food: { restaurant: { id: restaurantId } } } },
       relations: [

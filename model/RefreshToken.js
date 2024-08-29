@@ -17,6 +17,22 @@ const RefreshToken = new EntitySchema({
       type: "varchar",
       nullable: true,
     },
+    createdBy: {
+      type: "varchar",
+      nullable: true,
+    },
+    createdOn: {
+      type: "timestamp",
+      nullable: true,
+    },
+    modifiedBy: {
+      type: "varchar",
+      nullable: true,
+    },
+    modifiedOn: {
+      type: "timestamp",
+      nullable: true,
+    },
   },
 });
 

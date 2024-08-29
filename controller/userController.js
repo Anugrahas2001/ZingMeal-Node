@@ -43,6 +43,8 @@ async function signUp(req, res) {
       id: cuid(),
       token: refreshToken,
       itemId: user.id,
+      createdBy: email.substring(0, email.indexOf("@")),
+      createdOn: new Date(),
     };
     await tokenRepository.save(token);
 
@@ -60,13 +62,14 @@ async function signUp(req, res) {
 async function login(req, res) {
   try {
     const { email, password } = req.body;
+    console.log(email, password);
     if (!email || !password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const userRepository = dataSource.getRepository("User");
     const user = await userRepository.findOne({
-      where: { email },
+      where: { email: email },
     });
 
     if (!user) {
@@ -74,6 +77,7 @@ async function login(req, res) {
         .status(401)
         .json({ message: `user not found with this ${email}` });
     }
+    console.log(user, "userr");
 
     const isValidPassword = await encrypt.comparePassword(
       password,
@@ -82,9 +86,43 @@ async function login(req, res) {
     if (!isValidPassword) {
       return res.status(401).json({ message: "Invalid password" });
     }
+    console.log(isValidPassword, "passsword");
 
     const accessToken = encrypt.generateToken({ id: user.id });
     const refreshToken = encrypt.generateRefreshToken({ id: user.id });
+
+    const tokenRepository = dataSource.getRepository("RefreshToken");
+    const tokenData = await tokenRepository.findOne({
+      where: { itemId: user.id },
+    });
+    console.log(tokenData, "dataaaaa of user");
+
+    if (!tokenData) {
+      console.log("token is not there");
+      const token = {
+        id: cuid(),
+        token: refreshToken,
+        itemId: user.id,
+        createdBy: email.substring(0, email.indexOf("@")),
+        createdOn: new Date(),
+      };
+      await tokenRepository.save(token);
+      console.log(token, "saved");
+      return res.status(200).json({
+        meassage: "Login successfull",
+        Data: user,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      });
+    }
+
+    tokenData.token = refreshToken;
+    tokenData.modifiedBy = user.name;
+    tokenData.modifiedOn = new Date();
+
+    await tokenRepository.save(tokenData);
+    console.log("Refresh token updated and saved");
+
     return res.status(200).json({
       meassage: "Login successfull",
       Data: user,
@@ -95,6 +133,7 @@ async function login(req, res) {
     return res.status(404).json({ message: "user signin failed" });
   }
 }
+
 async function searchByRestuarantOrFood(req, res) {
   try {
     const { query } = req.params;
@@ -125,17 +164,10 @@ async function searchByRestuarantOrFood(req, res) {
 
     if (foods.length > 0) {
       foods.forEach((food) =>
-        uniqueRestaurantsMap.set(
-          food.restaurant.id,
-          food.restaurant
-        )
+        uniqueRestaurantsMap.set(food.restaurant.id, food.restaurant)
       );
-
-      // const restaurantsArray = Array.from(uniqueRestaurantsMap.entries()).map(
-      //   ([id, name]) => ({ id, name })
-      // );
       const restaurantsArray = Array.from(uniqueRestaurantsMap.values());
-      
+
       return res
         .status(200)
         .json({ message: "Success Food", Data: restaurantsArray });
@@ -180,9 +212,35 @@ async function createAccessToken(req, res) {
   });
 }
 
+async function logOut(req, res) {
+  try {
+    const { id } = req.params;
+    console.log(id, "user id");
+
+    const userRepository = dataSource.getRepository("User");
+    const user = await userRepository.findOne({
+      where: { id: id },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    console.log(user, "userrrrrr");
+    const tokenRepository = dataSource.getRepository("RefreshToken");
+    const token = await tokenRepository.findOne({
+      where: { itemId: id },
+    });
+    console.log(token, "refresh tokennn");
+    await tokenRepository.remove(token);
+    return res.status(200).json({ message: "user logout successfully" });
+  } catch {
+    return res.status(500).json({ message: "Failed to log out" });
+  }
+}
+
 module.exports = {
   signUp,
   login,
   searchByRestuarantOrFood,
   createAccessToken,
+  logOut,
 };
