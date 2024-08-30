@@ -30,11 +30,11 @@ const Restaurant = new EntitySchema({
       nullable: false,
     },
     openingTime: {
-      type: "timestamptz",
+      type: "timestamp",
       nullable: true,
     },
     closingTime: {
-      type: "timestamptz",
+      type: "timestamp",
       nullable: true,
     },
     createdBy: {

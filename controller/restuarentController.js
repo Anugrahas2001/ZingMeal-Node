@@ -6,6 +6,7 @@ const upload = require("../middleware/multer.js");
 const encrypt = new Encrypt();
 const cuid = require("cuid");
 const { RefreshToken } = require("../model/RefreshToken.js");
+const moment = require("moment");
 
 async function signUp(req, res) {
   await new Promise((resolve, reject) => {
@@ -31,7 +32,7 @@ async function signUp(req, res) {
     const restuarentData = await restaurantRepository.findOne({
       where: { restaurantName: restaurantName },
     });
-
+   
     if (restuarentData) {
       return res.status(400).json({ message: "Restaurant already exist" });
     }
@@ -49,42 +50,18 @@ async function signUp(req, res) {
       createdBy: restaurantName,
       createdOn: new Date(),
     };
+    
     const ratingRepository = dataSource.getRepository("Rating");
     const savedRating = await ratingRepository.save(rating);
 
     const currentDate = new Date().toISOString().split("T")[0];
-
-    // Convert openingTime to 24-hour format
-    let [openingHour, openingMinutes] = openingTime.split(":").map(Number);
-    if (openingHour === 12) {
-      openingHour = 0; // Convert 12 AM to 00:00
-    }
-    if (openingHour < 12) {
-
-    } else {
-      openingHour -= 12;
-    }
-    const formattedOpeningTime = `${openingHour
-      .toString()
-      .padStart(2, "0")}:${openingMinutes.toString().padStart(2, "0")}`;
-
-    let [closingHour, closingMinutes] = closingTime.split(":").map(Number);
-    if (closingHour === 12) {
-      closingHour = 12; // 12 PM remains 12:00
-    } else if (closingHour < 12) {
-      closingHour += 12; // Convert AM hours to PM (except 12 AM)
-    }
-    const formattedClosingTime = `${closingHour
-      .toString()
-      .padStart(2, "0")}:${closingMinutes.toString().padStart(2, "0")}`;
-
-    const openingDateTime = new Date(
-      `${currentDate}T${formattedOpeningTime}:00+05:30`
+   
+    let closingTimeWith12HoursAdded = new Date(
+      `${currentDate.toString()} ${closingTime}:00`
     );
-    const closingDateTime = new Date(
-      `${currentDate}T${formattedClosingTime}:00+05:30`
+    closingTimeWith12HoursAdded.setHours(
+      closingTimeWith12HoursAdded.getHours() + 12
     );
-
     const restaurant = {
       id: restaurantId,
       restaurantName: restaurantName,
@@ -92,25 +69,24 @@ async function signUp(req, res) {
       restaurantImg: result.url,
       restaurantPassword: encodedPassword,
       restaurantStatus: "Closed",
-      openingTime: openingDateTime,
-      closingTime: closingDateTime,
+      openingTime: new Date(`${currentDate.toString()} ${openingTime}:00`),
+      closingTime: closingTimeWith12HoursAdded,
       createdOn: new Date(),
       createdBy: restaurantName,
     };
 
     await restaurantRepository.save(restaurant);
-
     const accessToken = encrypt.generateToken({ id: restaurant.id });
     const refreshToken = encrypt.generateRefreshToken({ id: restaurant.id });
-
     const tokenRepository = dataSource.getRepository("RefreshToken");
     const token = {
       id: cuid(),
       token: refreshToken,
       itemId: restaurant.id,
+      createdBy: restaurant.restaurantName,
+      createdOn: new Date(),
     };
     await tokenRepository.save(token);
-
     return res.status(201).json({
       message: "Restuarent created successfully",
       Data: restaurant,
@@ -125,7 +101,6 @@ async function signUp(req, res) {
 async function login(req, res) {
   try {
     const { restaurantName, restaurantPassword } = req.body;
-    console.log(restaurantName, restaurantPassword, "credentials");
 
     if (!restaurantName || !restaurantPassword) {
       return res.status(401).json({ message: "Invalid Credentials" });
@@ -134,7 +109,6 @@ async function login(req, res) {
     const restaurant = await restaurantRepository.findOne({
       where: { restaurantName },
     });
-    console.log(restaurant, "hotel");
     const isValidPassword = await encrypt.comparePassword(
       restaurantPassword,
       restaurant.restaurantPassword
@@ -149,15 +123,12 @@ async function login(req, res) {
     if (!accessToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    console.log(accessToken, refreshToken, "token");
     const tokenRepository = dataSource.getRepository("RefreshToken");
 
     const tokenData = await tokenRepository.findOne({
       where: { itemId: restaurant.id },
-    });
-    console.log(tokenData, "data from token");
+    })
     if (!tokenData) {
-      console.log("token is not there");
       const token = {
         id: cuid(),
         token: refreshToken,
@@ -166,7 +137,6 @@ async function login(req, res) {
         createdOn: new Date(),
       };
       await tokenRepository.save(token);
-      console.log(token, "saved");
       return res.status(200).json({
         meassage: "Login successfull",
         Data: restaurant,
@@ -180,7 +150,6 @@ async function login(req, res) {
     tokenData.modifiedOn = new Date();
 
     await tokenRepository.save(tokenData);
-    console.log("Refresh token updated and saved");
 
     return res.status(200).json({
       message: "Restuarent Login Successfully",
@@ -341,7 +310,6 @@ async function getRestaurantById(req, res) {
 async function logOut(req, res) {
   try {
     const { id } = req.params;
-    console.log(id, "idddd");
 
     const restaurantRepository = dataSource.getRepository("Restaurant");
     const restaurant = await restaurantRepository.findOne({
@@ -350,12 +318,12 @@ async function logOut(req, res) {
     if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found" });
     }
-    console.log(restaurant, "restaurantttt");
+
     const tokenRepository = dataSource.getRepository("RefreshToken");
     const token = await tokenRepository.findOne({
       where: { itemId: id },
     });
-    console.log(token, "refresh tokennn");
+
     await tokenRepository.remove(token);
     return res.status(200).json({ message: "user logout successfully" });
   } catch (error) {

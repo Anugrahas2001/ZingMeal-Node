@@ -15,7 +15,7 @@ const Order = new EntitySchema({
     orderStatus: {
       type: "enum",
         enum: orderStatus, 
-        default: orderStatus.PENDING
+        default: orderStatus.Preparing
     },
     totalPrice: {
       type: "float",

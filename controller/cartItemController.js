@@ -8,7 +8,6 @@ const { User } = require("../model/User.js");
 async function addToCart(req, res) {
   try {
     const { userId, cartId, foodId } = req.params;
-    console.log(userId,cartId,foodId,"idsdsahnn")
 
     const userRepository = dataSource.getRepository("User");
     const user = await userRepository.findOne({
@@ -52,7 +51,7 @@ async function addToCart(req, res) {
     };
 
     await cartItemRepository.save(cartItems);
-    console.log("savedddd yeahhh");
+
     return res
       .status(200)
       .json({ message: "Item successfully added to the cart", Data: cart });

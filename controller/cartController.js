@@ -4,18 +4,17 @@ const { dataSource } = require("../db/connection");
 async function createCart(req, res) {
   try {
     const { userId } = req.params;
-    console.log(userId, "user iddd");
 
     const userRepository = dataSource.getRepository("User");
-    console.log("userrrr 1");
+
     const user = await userRepository.findOne({
       where: { id: userId },
     });
-    console.log("2 dataaa");
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    console.log(user, "user datttaaaaaa");
+
     const cart = {
       id: cuid(),
       user: userId,
@@ -24,7 +23,7 @@ async function createCart(req, res) {
       createdBy: user.name,
       createdOn: new Date(),
     };
-    console.log(cart, "cart dataa");
+    
     const cartRepository = dataSource.getRepository("Cart");
     await cartRepository.save(cart);
 

@@ -62,7 +62,7 @@ async function signUp(req, res) {
 async function login(req, res) {
   try {
     const { email, password } = req.body;
-    console.log(email, password);
+ 
     if (!email || !password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -77,7 +77,6 @@ async function login(req, res) {
         .status(401)
         .json({ message: `user not found with this ${email}` });
     }
-    console.log(user, "userr");
 
     const isValidPassword = await encrypt.comparePassword(
       password,
@@ -86,7 +85,6 @@ async function login(req, res) {
     if (!isValidPassword) {
       return res.status(401).json({ message: "Invalid password" });
     }
-    console.log(isValidPassword, "passsword");
 
     const accessToken = encrypt.generateToken({ id: user.id });
     const refreshToken = encrypt.generateRefreshToken({ id: user.id });
@@ -95,10 +93,8 @@ async function login(req, res) {
     const tokenData = await tokenRepository.findOne({
       where: { itemId: user.id },
     });
-    console.log(tokenData, "dataaaaa of user");
 
     if (!tokenData) {
-      console.log("token is not there");
       const token = {
         id: cuid(),
         token: refreshToken,
@@ -107,7 +103,7 @@ async function login(req, res) {
         createdOn: new Date(),
       };
       await tokenRepository.save(token);
-      console.log(token, "saved");
+ 
       return res.status(200).json({
         meassage: "Login successfull",
         Data: user,
@@ -121,7 +117,6 @@ async function login(req, res) {
     tokenData.modifiedOn = new Date();
 
     await tokenRepository.save(tokenData);
-    console.log("Refresh token updated and saved");
 
     return res.status(200).json({
       meassage: "Login successfull",
@@ -215,7 +210,6 @@ async function createAccessToken(req, res) {
 async function logOut(req, res) {
   try {
     const { id } = req.params;
-    console.log(id, "user id");
 
     const userRepository = dataSource.getRepository("User");
     const user = await userRepository.findOne({
@@ -224,12 +218,12 @@ async function logOut(req, res) {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    console.log(user, "userrrrrr");
+  
     const tokenRepository = dataSource.getRepository("RefreshToken");
     const token = await tokenRepository.findOne({
       where: { itemId: id },
     });
-    console.log(token, "refresh tokennn");
+
     await tokenRepository.remove(token);
     return res.status(200).json({ message: "user logout successfully" });
   } catch {

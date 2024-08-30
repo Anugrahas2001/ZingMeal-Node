@@ -2,8 +2,6 @@ const cuid = require("cuid");
 const { dataSource } = require("../db/connection.js");
 const { paymentStatus } = require("../enum/paymentStatus.js");
 const { paymentMethods } = require("../enum/paymentMethod.js");
-const moment = require("moment");
-// const { formatInTimeZone } = require("date-fns-tz");
 const { Payment } = require("../model/Payment.js");
 const { orderStatus } = require("../enum/orderStatus.js");
 const dotenv = require("dotenv");
@@ -62,7 +60,6 @@ async function paymentSuccess(req, res) {
       if (generatedSignature !== razorpaySignature) {
         return res.status(400).json({ message: "Invalid payment signature" });
       }
-      console.log("Signature verified successfully");
     }
 
     const cartRepository = dataSource.getRepository("Cart");
@@ -90,7 +87,7 @@ async function paymentSuccess(req, res) {
 
     const orderData = {
       id: cuid(),
-      orderStatus: orderStatus.PREPARING,
+      orderStatus: orderStatus.Preparing,
       totalPrice: cart.totalPrice,
       deliveryCharge: cart.deliveryCharge,
       deliveryTime: cart.deliveryTime,
@@ -104,7 +101,6 @@ async function paymentSuccess(req, res) {
 
     await orderRepository.save(orderData);
 
-    // Create order items
     const orderItems = allCartItems.map((cartItem) => {
       return orderItemRepository.create({
         id: cuid(),
@@ -118,7 +114,6 @@ async function paymentSuccess(req, res) {
 
     await orderItemRepository.save(orderItems);
 
-    // Create payment entry
     const payment = {
       id: cuid(),
       razorpayPaymentId: razorpayPaymentId || null,
@@ -198,19 +193,15 @@ async function cancelOrder(req, res) {
         where: { order: { id: orderId } },
       });
 
-      // console.log(moment().format('LT'),"timee");
-
       const currentTime = new Date().getTime();
       const createdTime = order.createdOn.getTime();
       const timeDifferenceInMn = (currentTime - createdTime) / (1000 * 60);
-      console.log(timeDifferenceInMn, "in minutess");
 
       if (timeDifferenceInMn < 30) {
-        if (order.orderStatus === "PREPARING") {
+        if (order.orderStatus === "Preparing") {
           if (payment) await paymentRepository.remove(payment);
-          order.orderStatus = orderStatus.CANCELLED;
+          order.orderStatus = orderStatus.Cancelled;
           await orderRepository.save(order);
-          console.log("saved");
 
           return res
             .status(200)
@@ -239,21 +230,20 @@ async function filterBasedOnStatus(req, res) {
     const allOrders = await orderRepository.find({
       where: {
         orderStatus: In([
-          orderStatus.PREPARING,
-          orderStatus.PACKED,
-          orderStatus.DISPATCHED,
+          orderStatus.Preparing,
+          orderStatus.Packed,
+          orderStatus.Dispatched,
         ]),
       },
       relations: ["orderItems", "orderItems.food"],
+      order: { createdOn: "DESC" },
     });
-    console.log(allOrders, "datat pre,pack,dis");
 
-    const order = ["PREPARING", "PACKED", "DISPATCHED"];
+    const order = ["Preparing", "Packed", "Dispatched"];
 
     const sortedOrders = allOrders.sort(
       (x, y) => order.indexOf(x.orderStatus) - order.indexOf(y.orderStatus)
     );
-    console.log(sortedOrders, "sorted");
 
     return res.status(200).json({ sortedOrders });
   } catch (error) {
@@ -269,12 +259,11 @@ async function cancelAndDelivered(req, res) {
     const orders = await orderRepository.find({
       relations: ["orderItems", "orderItems.food"],
     });
-    console.log(orders, "1");
 
     const filteredOrders = orders.filter((order) => {
       return (
-        order.orderStatus === orderStatus.CANCELLED ||
-        order.orderStatus === orderStatus.DELIVERED
+        order.orderStatus === orderStatus.Cancelled ||
+        order.orderStatus === orderStatus.Delivered
       );
     });
     const sortedOrders = filteredOrders.sort(
@@ -290,9 +279,7 @@ async function cancelAndDelivered(req, res) {
 
 async function ordersInRestaurant(req, res) {
   try {
-    console.log();
     const { restaurantId } = req.params;
-    console.log(restaurantId);
     const orderRepository = dataSource.getRepository("Order");
     const orders = await orderRepository.find({
       where: { orderItems: { food: { restaurant: { id: restaurantId } } } },
@@ -302,8 +289,6 @@ async function ordersInRestaurant(req, res) {
         "orderItems.food.restaurant",
       ],
     });
-
-    console.log(orders, "alll aorderrsg");
     return res.status(200).json({ orders });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch orders" });
@@ -313,7 +298,6 @@ async function ordersInRestaurant(req, res) {
 async function getAllOrders(req, res) {
   try {
     const { userId, orderId } = req.params;
-    console.log(userId, orderId, "user and order");
 
     const userRepository = dataSource.getRepository("User");
     const user = await userRepository.findOne({
@@ -330,7 +314,6 @@ async function getAllOrders(req, res) {
       relations: ["order", "food"],
     });
 
-    console.log(orderItems, "order itemssss");
     return res.status(200).json({
       message: "Successfully retrieved orderItems",
       Data: orderItems,
@@ -350,9 +333,9 @@ async function orderItemsCount(req, res) {
     if (!cartItems) {
       return res.status(404).json({ message: "Cartitems not found" });
     }
-    console.log(cartItems, "cartttthshbnxn");
+
     const count = cartItems.reduce((total, item) => total + item.quantity, 0);
-    console.log(count, "mnumberrrer");
+
     return res
       .status(200)
       .json({ message: "Successfully got count", Count: count });
