@@ -11,10 +11,14 @@ PORT = process.env.PORT || 3000;
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(cors({
+//   origin: 'http://localhost:5173'
+// }));
 app.use(cors({
-  origin: 'http://localhost:5173'
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }));
-
 
 app.use('/user', userRouter); 
 app.use("/restaurant", restuarentRouter);
