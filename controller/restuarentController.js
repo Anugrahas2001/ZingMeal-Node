@@ -80,8 +80,6 @@ async function signUp(req, res) {
       restaurantImg: result.url,
       restaurantPassword: encodedPassword,
       restaurantStatus: "Closed",
-      // openingTime: new Date(`${currentDate.toString()} ${openingTime}:00`),
-      // closingTime: closingTimeWith12HoursAdded,
       openingTime: openingTimeLocal,
       closingTime: closingTimeLocal,
       createdOn: new Date(),
@@ -232,24 +230,7 @@ async function updateRestuarent(req, res) {
       req.body.restaurantStatus || restaurant.restaurantStatus;
 
     if (req.body.openingTime) {
-      // let [openingHour, openingMinutes] = req.body.openingTime
-      //   .split(":")
-      //   .map(Number);
-
-      // openingMinutes = isNaN(openingMinutes) ? 0 : openingMinutes;
-
-      // if (openingHour === 12) openingHour = 0;
-
-      // if (openingHour < 0 || openingHour > 12) {
-      //   return res.status(400).json({ message: "Invalid opening hour" });
-      // }
-
-      // const formattedOpeningTime = `${openingHour
-      //   .toString()
-      //   .padStart(2, "0")}:${openingMinutes.toString().padStart(2, "0")}`;
-      // restaurant.openingTime = new Date(
-      //   `${currentDate}T${formattedOpeningTime}:00+05:30`
-      // );
+      
       const openingTime = moment(req.body.openingTime, "hh:mm A").format(
         "HH:mm:ss"
       );
@@ -257,26 +238,6 @@ async function updateRestuarent(req, res) {
     }
 
     if (req.body.closingTime) {
-      //   let [closingHour, closingMinutes] = req.body.closingTime
-      //     .split(":")
-      //     .map(Number);
-
-      //   closingMinutes = isNaN(closingMinutes) ? 0 : closingMinutes;
-
-      //   if (closingHour < 12) closingHour += 12;
-      //   if (closingHour === 24) closingHour = 12;
-
-      //   if (closingHour < 12 || closingHour > 23) {
-      //     return res.status(400).json({ message: "Invalid closing hour" });
-      //   }
-
-      //   const formattedClosingTime = `${closingHour
-      //     .toString()
-      //     .padStart(2, "0")}:${closingMinutes.toString().padStart(2, "0")}`;
-      //   restaurant.closingTime = new Date(
-      //     `${currentDate}T${formattedClosingTime}:00+05:30`
-      //   );
-
       const closingTime = moment(req.body.closingTime, "hh:mm A").format(
         "HH:mm:ss"
       );
