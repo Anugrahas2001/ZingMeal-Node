@@ -32,7 +32,7 @@ async function signUp(req, res) {
     const restuarentData = await restaurantRepository.findOne({
       where: { restaurantName: restaurantName },
     });
-   
+
     if (restuarentData) {
       return res.status(400).json({ message: "Restaurant already exist" });
     }
@@ -50,18 +50,29 @@ async function signUp(req, res) {
       createdBy: restaurantName,
       createdOn: new Date(),
     };
-    
+
     const ratingRepository = dataSource.getRepository("Rating");
     const savedRating = await ratingRepository.save(rating);
 
-    const currentDate = new Date().toISOString().split("T")[0];
-   
-    let closingTimeWith12HoursAdded = new Date(
-      `${currentDate.toString()} ${closingTime}:00`
-    );
-    closingTimeWith12HoursAdded.setHours(
-      closingTimeWith12HoursAdded.getHours() + 12
-    );
+    // const currentDate = new Date().toISOString().split("T")[0];
+
+    // let closingTimeWith12HoursAdded = new Date(
+    //   `${currentDate.toString()} ${closingTime}:00`
+    // );
+    // closingTimeWith12HoursAdded.setHours(
+    //   closingTimeWith12HoursAdded.getHours() + 12
+    // );
+
+    const currentDate = moment().format("YYYY-MM-DD");
+    const openingTimeLocal = moment(
+      `${currentDate} ${openingTime}`,
+      "YYYY-MM-DD hh:mm A"
+    ).format("YYYY-MM-DD HH:mm:ss");
+    const closingTimeLocal = moment(
+      `${currentDate} ${closingTime}`,
+      "YYYY-MM-DD hh:mm A"
+    ).format("YYYY-MM-DD HH:mm:ss");
+
     const restaurant = {
       id: restaurantId,
       restaurantName: restaurantName,
@@ -69,8 +80,10 @@ async function signUp(req, res) {
       restaurantImg: result.url,
       restaurantPassword: encodedPassword,
       restaurantStatus: "Closed",
-      openingTime: new Date(`${currentDate.toString()} ${openingTime}:00`),
-      closingTime: closingTimeWith12HoursAdded,
+      // openingTime: new Date(`${currentDate.toString()} ${openingTime}:00`),
+      // closingTime: closingTimeWith12HoursAdded,
+      openingTime: openingTimeLocal,
+      closingTime: closingTimeLocal,
       createdOn: new Date(),
       createdBy: restaurantName,
     };
@@ -127,7 +140,7 @@ async function login(req, res) {
 
     const tokenData = await tokenRepository.findOne({
       where: { itemId: restaurant.id },
-    })
+    });
     if (!tokenData) {
       const token = {
         id: cuid(),
@@ -219,46 +232,55 @@ async function updateRestuarent(req, res) {
       req.body.restaurantStatus || restaurant.restaurantStatus;
 
     if (req.body.openingTime) {
-      let [openingHour, openingMinutes] = req.body.openingTime
-        .split(":")
-        .map(Number);
+      // let [openingHour, openingMinutes] = req.body.openingTime
+      //   .split(":")
+      //   .map(Number);
 
-      openingMinutes = isNaN(openingMinutes) ? 0 : openingMinutes;
+      // openingMinutes = isNaN(openingMinutes) ? 0 : openingMinutes;
 
-      if (openingHour === 12) openingHour = 0;
+      // if (openingHour === 12) openingHour = 0;
 
-      if (openingHour < 0 || openingHour > 12) {
-        return res.status(400).json({ message: "Invalid opening hour" });
-      }
+      // if (openingHour < 0 || openingHour > 12) {
+      //   return res.status(400).json({ message: "Invalid opening hour" });
+      // }
 
-      const formattedOpeningTime = `${openingHour
-        .toString()
-        .padStart(2, "0")}:${openingMinutes.toString().padStart(2, "0")}`;
-      restaurant.openingTime = new Date(
-        `${currentDate}T${formattedOpeningTime}:00+05:30`
+      // const formattedOpeningTime = `${openingHour
+      //   .toString()
+      //   .padStart(2, "0")}:${openingMinutes.toString().padStart(2, "0")}`;
+      // restaurant.openingTime = new Date(
+      //   `${currentDate}T${formattedOpeningTime}:00+05:30`
+      // );
+      const openingTime = moment(req.body.openingTime, "hh:mm A").format(
+        "HH:mm:ss"
       );
+      restaurant.openingTime = `${currentDate} ${openingTime}`;
     }
 
     if (req.body.closingTime) {
-      let [closingHour, closingMinutes] = req.body.closingTime
-        .split(":")
-        .map(Number);
+      //   let [closingHour, closingMinutes] = req.body.closingTime
+      //     .split(":")
+      //     .map(Number);
 
-      closingMinutes = isNaN(closingMinutes) ? 0 : closingMinutes;
+      //   closingMinutes = isNaN(closingMinutes) ? 0 : closingMinutes;
 
-      if (closingHour < 12) closingHour += 12;
-      if (closingHour === 24) closingHour = 12;
+      //   if (closingHour < 12) closingHour += 12;
+      //   if (closingHour === 24) closingHour = 12;
 
-      if (closingHour < 12 || closingHour > 23) {
-        return res.status(400).json({ message: "Invalid closing hour" });
-      }
+      //   if (closingHour < 12 || closingHour > 23) {
+      //     return res.status(400).json({ message: "Invalid closing hour" });
+      //   }
 
-      const formattedClosingTime = `${closingHour
-        .toString()
-        .padStart(2, "0")}:${closingMinutes.toString().padStart(2, "0")}`;
-      restaurant.closingTime = new Date(
-        `${currentDate}T${formattedClosingTime}:00+05:30`
+      //   const formattedClosingTime = `${closingHour
+      //     .toString()
+      //     .padStart(2, "0")}:${closingMinutes.toString().padStart(2, "0")}`;
+      //   restaurant.closingTime = new Date(
+      //     `${currentDate}T${formattedClosingTime}:00+05:30`
+      //   );
+
+      const closingTime = moment(req.body.closingTime, "hh:mm A").format(
+        "HH:mm:ss"
       );
+      restaurant.closingTime = `${currentDate} ${closingTime}`;
     }
 
     restaurant.modifiedBy = req.body.modifiedBy || restaurant.restaurantName;
