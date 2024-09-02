@@ -210,12 +210,12 @@ async function updateRestuarent(req, res) {
     let imageUrl = restaurant.restaurantImg;
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path);
-      // imageUrl=result.url.replace(/^http:/,"https");
-      imageUrl=result.url;
+      imageUrl=result.url.replace(/^http:/,"https");
+      // imageUrl=result.url;
     }
 
     // const currentDate = new Date().toISOString().split("T")[0];
-    const currentDate=moment();
+    const currentDate = moment().format("YYYY-MM-DD");
 
     restaurant.restaurantName =
       req.body.restaurantName || restaurant.restaurantName;
