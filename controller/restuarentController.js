@@ -54,15 +54,6 @@ async function signUp(req, res) {
     const ratingRepository = dataSource.getRepository("Rating");
     const savedRating = await ratingRepository.save(rating);
 
-    // const currentDate = new Date().toISOString().split("T")[0];
-
-    // let closingTimeWith12HoursAdded = new Date(
-    //   `${currentDate.toString()} ${closingTime}:00`
-    // );
-    // closingTimeWith12HoursAdded.setHours(
-    //   closingTimeWith12HoursAdded.getHours() + 12
-    // );
-
     const currentDate = moment().format("YYYY-MM-DD");
     const openingTimeLocal = moment(
       `${currentDate} ${openingTime}`,
