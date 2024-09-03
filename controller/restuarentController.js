@@ -40,7 +40,7 @@ async function signUp(req, res) {
     const encodedPassword = await encrypt.encryptPass(restaurantPassword);
 
     const result = await cloudinary.uploader.upload(req.file.path);
-    const httpsUrl = result.url.replace("/^http:/", "https");
+    const httpsUrl = result.secure_url;
 
     const restaurantId = cuid();
 
@@ -210,12 +210,8 @@ async function updateRestuarent(req, res) {
     let imageUrl = restaurant.restaurantImg;
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path);
-      // console.log(result, "resultt");
-      // imageUrl = result.secure_url.replace(/^http:/, "https");
       imageUrl=result.secure_url;
     }
-
-    // const currentDate = new Date().toISOString().split("T")[0];
     const currentDate = moment().format("YYYY-MM-DD");
 
     restaurant.restaurantName =
