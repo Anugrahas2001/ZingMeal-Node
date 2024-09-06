@@ -71,7 +71,7 @@ async function createFood(req, res) {
     const food = {
       id: foodId.id,
       foodName: foodName,
-      imageFile: result.url,
+      imageFile: result.secure_url,
       foodDescription: foodDescription,
       foodType: foodType,
       foodCategory: foodCategory,
@@ -172,7 +172,7 @@ async function updateFood(req, res) {
     let imageUrl = food.imageFile;
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path);
-      imageUrl = result.url;
+      imageUrl = result.secure_url;
     }
 
     food.foodName = req.body.foodName ? req.body.foodName : food.foodName;
@@ -295,7 +295,6 @@ async function getFoodsBasedOnType(req, res) {
 
     const foodRepository = dataSource.getRepository("Food");
     const allFoods = await foodRepository.find({
-      // where: { foodType: foodType },
       where: { restaurant: { id: restaurantId } },
     });
 

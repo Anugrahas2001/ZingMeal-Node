@@ -1,5 +1,4 @@
 const orderStatus = Object.freeze({
-  // PENDING: "PENDING",
   Preparing:"Preparing",
   Packed: "Packed",
   Dispatched: "Dispatched",
