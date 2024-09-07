@@ -29,8 +29,8 @@ const {
   filterBasedOnStatus,
   cancelAndDelivered,
   ordersInRestaurant,
-  orderItemsCount,
 } = require("../controller/orderController.js");
+const { cartItemsCount } = require("../controller/cartItemController.js");
 
 router.post("/signUp", signUp);
 
@@ -65,7 +65,7 @@ router.put("/updateFood/:restuarentId/:foodId", updateFood);
 
 router.delete("/delete/:foodId", deleteFood);
 
-router.get("/:userId/getCount", orderItemsCount);
+router.get("/getCount/:userId", cartItemsCount);
 
 router.patch("/totalPrice/:restuarentId/:cartId", calculateTotalPrice);
 

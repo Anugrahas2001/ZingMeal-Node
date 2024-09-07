@@ -324,29 +324,7 @@ async function getAllOrders(req, res) {
   }
 }
 
-async function orderItemsCount(req, res) {
-  try {
-    const userId = req.params;
-    const cartItemRepository = dataSource.getRepository("CartItem");
-    const cartRepository = dataSource.getRepository("");
 
-    const cartItems = await cartItemRepository.find({
-      where: { cart: { user: { id: userId } } },
-    });
-    json({items:cartItems})
-    if (!cartItems) {
-      return res.status(404).json({ message: "Cartitems not found" });
-    }
-
-    const count = cartItems.reduce((total, item) => total + item.quantity, 0);
-
-    return res
-      .status(200)
-      .json({ message: "Successfully got count", Count: count });
-  } catch (error) {
-    console.log(error);
-  }
-}
 
 module.exports = {
   createOrder,
@@ -357,5 +335,4 @@ module.exports = {
   cancelAndDelivered,
   ordersInRestaurant,
   getAllOrders,
-  orderItemsCount,
 };
