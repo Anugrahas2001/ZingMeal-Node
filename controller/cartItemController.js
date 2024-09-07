@@ -131,13 +131,17 @@ async function getAllCartItems(req, res) {
 
 async function cartItemsCount(req, res) {
   try {
-    const {userId} = req.params;
+    const { userId } = req.params;
     const cartItemRepository = dataSource.getRepository("CartItem");
     const cartRepository = dataSource.getRepository("Cart");
     console.log("hello");
 
+    const userCart = await cartRepository.find({
+      where: { user: { id: userId } },
+    });
+
     const cartItems = await cartItemRepository.find({
-      where: { cart: { user: { id: userId } } },
+      where: { cart: { id: userCart.id } },
     });
     json({ items: cartItems });
     if (!cartItems) {
