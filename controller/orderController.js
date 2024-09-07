@@ -8,6 +8,7 @@ const dotenv = require("dotenv");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const { In } = require("typeorm");
+const { json } = require("body-parser");
 dotenv.config();
 
 async function createOrder(req, res) {
@@ -333,6 +334,8 @@ async function orderItemsCount(req, res) {
     const userCart = await cartRepository.findOne({
       where: { user: { id: userId } },
     });
+    console.log(userCart, "cartt");
+    json({ cart: userCart });
 
     if (!userCart) {
       return res.status(404).json({ message: "Cart not found for the user" });
@@ -341,12 +344,15 @@ async function orderItemsCount(req, res) {
     const cartItems = await cartItemRepository.find({
       where: { cart: userCart },
     });
+    console.log(cartItems, "items");
+    json({ count: cartItems });
 
     if (cartItems.length === 0) {
       return res.status(404).json({ message: "No cart items found" });
     }
 
     const count = cartItems.reduce((total, item) => total + item.quantity, 0);
+    json({ count: count });
 
     return res
       .status(200)
