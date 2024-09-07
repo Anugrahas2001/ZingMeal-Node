@@ -65,7 +65,7 @@ router.put("/updateFood/:restuarentId/:foodId", updateFood);
 
 router.delete("/delete/:foodId", deleteFood);
 
-router.get("/getCount", orderItemsCount);
+router.get("/:userId/getCount", orderItemsCount);
 
 router.patch("/totalPrice/:restuarentId/:cartId", calculateTotalPrice);
 

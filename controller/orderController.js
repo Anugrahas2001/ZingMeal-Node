@@ -197,28 +197,31 @@ async function cancelOrder(req, res) {
       const createdTime = order.createdOn.getTime();
       const timeDifferenceInMn = (currentTime - createdTime) / (1000 * 60);
 
-       if (timeDifferenceInMn >= 30) {
-      return res.status(400).json({
-        message: "Order can only be cancelled within 30 minutes of being placed",
-      });
-    }
+      if (timeDifferenceInMn >= 30) {
+        return res.status(400).json({
+          message:
+            "Order can only be cancelled within 30 minutes of being placed",
+        });
+      }
 
-    if (order.orderStatus === "Preparing") {
-      if (payment) await paymentRepository.remove(payment);
-      order.orderStatus = orderStatus.Cancelled;
-      await orderRepository.save(order);
+      if (order.orderStatus === "Preparing") {
+        if (payment) await paymentRepository.remove(payment);
+        order.orderStatus = orderStatus.Cancelled;
+        await orderRepository.save(order);
 
-      return res.status(200).json({ message: "Order cancelled successfully", Data: order });
-    } else {
-      return res.status(400).json({
-        message: `Can't cancel this order. Food order already ${order.orderStatus}.`,
-      });
+        return res
+          .status(200)
+          .json({ message: "Order cancelled successfully", Data: order });
+      } else {
+        return res.status(400).json({
+          message: `Can't cancel this order. Food order already ${order.orderStatus}.`,
+        });
+      }
     }
-  } }catch (error) {
+  } catch (error) {
     return res.status(500).json({ message: "Can't cancel this order" });
   }
 }
-
 
 async function filterBasedOnStatus(req, res) {
   try {
@@ -323,9 +326,14 @@ async function getAllOrders(req, res) {
 
 async function orderItemsCount(req, res) {
   try {
+    const userId = req.params;
     const cartItemRepository = dataSource.getRepository("CartItem");
+    const cartRepository = dataSource.getRepository("");
 
-    const cartItems = await cartItemRepository.find();
+    const cartItems = await cartItemRepository.find({
+      where: { cart: { user: { id: userId } } },
+      relations: ["cart"],
+    });
     if (!cartItems) {
       return res.status(404).json({ message: "Cartitems not found" });
     }
