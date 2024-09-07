@@ -131,7 +131,7 @@ async function getAllCartItems(req, res) {
 
 async function cartItemsCount(req, res) {
   try {
-    const userId = req.params;
+    const {userId} = req.params;
     const cartItemRepository = dataSource.getRepository("CartItem");
     const cartRepository = dataSource.getRepository("Cart");
     console.log("hello");
