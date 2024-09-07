@@ -128,34 +128,39 @@ async function getAllCartItems(req, res) {
     return res.status(500).json({ message: "failed to retrieve data" });
   }
 }
-
 async function cartItemsCount(req, res) {
   try {
     const { userId } = req.params;
     const cartItemRepository = dataSource.getRepository("CartItem");
     const cartRepository = dataSource.getRepository("Cart");
-    console.log("hello");
 
-    const userCart = await cartRepository.find({
+    const userCart = await cartRepository.findOne({
       where: { user: { id: userId } },
     });
 
+    if (!userCart) {
+      return res.status(404).json({ message: "Cart not found for user" });
+    }
     const cartItems = await cartItemRepository.find({
       where: { cart: { id: userCart.id } },
     });
-    json({ items: cartItems });
-    if (!cartItems) {
-      return res.status(404).json({ message: "Cartitems not found" });
+
+    if (!cartItems || cartItems.length === 0) {
+      return res.status(404).json({ message: "Cart items not found" });
     }
 
     const count = cartItems.reduce((total, item) => total + item.quantity, 0);
 
-    return res
-      .status(200)
-      .json({ message: "Successfully got count", Count: count });
+    return res.status(200).json({
+      message: "Successfully got count",
+      count: count,
+      items: cartItems,
+    });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: "Server error" });
   }
 }
+
 
 module.exports = { addToCart, updateCartItem, getAllCartItems, cartItemsCount };
