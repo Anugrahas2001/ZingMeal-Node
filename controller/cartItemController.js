@@ -133,12 +133,13 @@ async function cartItemsCount(req, res) {
   try {
     const userId = req.params;
     const cartItemRepository = dataSource.getRepository("CartItem");
-    const cartRepository = dataSource.getRepository("");
+    const cartRepository = dataSource.getRepository("Cart");
+    console.log("hello");
 
     const cartItems = await cartItemRepository.find({
       where: { cart: { user: { id: userId } } },
     });
-    json({items:cartItems})
+    json({ items: cartItems });
     if (!cartItems) {
       return res.status(404).json({ message: "Cartitems not found" });
     }
@@ -153,4 +154,4 @@ async function cartItemsCount(req, res) {
   }
 }
 
-module.exports = { addToCart, updateCartItem, getAllCartItems,  cartItemsCount,};
+module.exports = { addToCart, updateCartItem, getAllCartItems, cartItemsCount };
