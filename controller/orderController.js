@@ -225,23 +225,34 @@ async function cancelOrder(req, res) {
 
 async function filterBasedOnStatus(req, res) {
   try {
+    const { userId } = req.params;
+    const userRepository = dataSource.getRepository("User");
     const orderRepository = dataSource.getRepository("Order");
+    const user = await userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    // const orders=await orderRepository.findOne({
+    //   where:{}
+    // })
+    const validOrderStatuses = ["Preparing", "Packed", "Dispatched"];
     const allOrders = await orderRepository.find({
       where: {
-        orderStatus: In([
-          orderStatus.Preparing,
-          orderStatus.Packed,
-          orderStatus.Dispatched,
-        ]),
+        user: { id: userId },
+        orderStatus: In(validOrderStatuses),
       },
       relations: ["orderItems", "orderItems.food"],
       order: { createdOn: "DESC" },
     });
 
-    const order = ["Preparing", "Packed", "Dispatched"];
+    // const order = ["Preparing", "Packed", "Dispatched"];
 
     const sortedOrders = allOrders.sort(
-      (x, y) => order.indexOf(x.orderStatus) - order.indexOf(y.orderStatus)
+      (x, y) =>
+        validOrderStatuses.indexOf(x.orderStatus) -
+        validOrderStatuses.indexOf(y.orderStatus)
     );
 
     return res.status(200).json({ sortedOrders });
@@ -323,8 +334,6 @@ async function getAllOrders(req, res) {
     });
   }
 }
-
-
 
 module.exports = {
   createOrder,

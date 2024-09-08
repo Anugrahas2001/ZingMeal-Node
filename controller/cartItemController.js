@@ -145,10 +145,6 @@ async function cartItemsCount(req, res) {
       where: { cart: { id: userCart.id } },
     });
 
-    // if (!cartItems || cartItems.length === 0) {
-    //   return res.status(404).json({ message: "Cart items not found" });
-    // }
-
     const count = cartItems.reduce((total, item) => total + item.quantity, 0);
 
     return res.status(200).json({

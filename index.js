@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://anugraha--soft-pothos-8a37b8.netlify.app",
+  "https://anugraha--soft-pothos-8a37b8.netlify.app"
 ];
 
 app.use(
