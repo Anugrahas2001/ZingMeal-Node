@@ -236,14 +236,18 @@ async function newPassword(req, res) {
     const { userId } = req.params;
 
     const userRepository = dataSource.getRepository("User");
-    const user = userRepository.findOne({
+    const user = await userRepository.findOne({
       where: { id: userId },
     });
     if (!user) {
       return res.status(404).json({ message: "user not found" });
     }
 
-    user.password = req.body.password ? req.body.password : user.password;
+    if (req.body.password) {
+      const encodedPassword = await encrypt.encryptPass(req.body.password);
+      user.password = encodedPassword;
+    }
+
     await userRepository.save(user);
 
     return res
