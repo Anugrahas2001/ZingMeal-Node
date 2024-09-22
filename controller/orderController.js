@@ -265,7 +265,7 @@ async function cancelAndDelivered(req, res) {
     const userRepository = dataSource.getRepository("User");
     const orderRepository = dataSource.getRepository("Order");
     const user = await userRepository.findOne({
-      where: { id: userId },
+      where: { user: { id: userId } },
     });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
