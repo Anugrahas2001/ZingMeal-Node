@@ -265,13 +265,13 @@ async function cancelAndDelivered(req, res) {
     const userRepository = dataSource.getRepository("User");
     const orderRepository = dataSource.getRepository("Order");
     const user = await userRepository.findOne({
-      where: { user: { id: userId } },
+      where: { id: userId },
     });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     const orders = await orderRepository.find({
-      where: { id: userId },
+      where: { user: { id: userId } },
       relations: ["orderItems", "orderItems.food"],
     });
 
