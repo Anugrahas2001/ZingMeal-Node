@@ -77,7 +77,7 @@ router.patch("/updateOrderStatus/:restaurantId/:orderId", updateOrderStatus);
 
 router.get("/filterPending/:userId", filterBasedOnStatus);
 
-router.get("/cancelAndDelivered", cancelAndDelivered);
+router.get("/cancelAndDelivered/:userId", cancelAndDelivered);
 
 router.get("/allOrdersInRestaurant/:restaurantId", ordersInRestaurant);
 
