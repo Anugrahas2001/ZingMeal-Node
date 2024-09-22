@@ -62,7 +62,7 @@ async function signUp(req, res) {
 async function login(req, res) {
   try {
     const { email, password } = req.body;
- 
+
     if (!email || !password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -103,7 +103,7 @@ async function login(req, res) {
         createdOn: new Date(),
       };
       await tokenRepository.save(token);
- 
+
       return res.status(200).json({
         meassage: "Login successfull",
         Data: user,
@@ -218,7 +218,7 @@ async function logOut(req, res) {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-  
+
     const tokenRepository = dataSource.getRepository("RefreshToken");
     const token = await tokenRepository.findOne({
       where: { itemId: id },
@@ -231,19 +231,34 @@ async function logOut(req, res) {
   }
 }
 
+async function newPassword(req, res) {
+  try {
+    const { userId } = req.params;
+
+    const userRepository = dataSource.getRepository("User");
+    const user = userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "user not found" });
+    }
+
+    user.password = req.body.password ? req.body.password : user.password;
+    await userRepository.save(user);
+
+    return res
+      .status(200)
+      .json({ message: "user password updated successfully", Data: user });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 module.exports = {
   signUp,
   login,
   searchByRestuarantOrFood,
   createAccessToken,
   logOut,
+  newPassword,
 };
-
-
-
-// const axios=require('axios');
-// const fetchData=async ()=>{
-//   try{
-//     const 
-//   }
-// }

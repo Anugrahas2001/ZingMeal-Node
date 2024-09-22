@@ -6,6 +6,7 @@ const {
   searchByRestuarantOrFood,
   createAccessToken,
   logOut,
+  newPassword,
 } = require("../controller/userController.js");
 const {
   addToCart,
@@ -31,7 +32,9 @@ router.post("/signUp", signUp);
 
 router.post("/login", login);
 
-router.delete("/logout/:id",authentication,logOut);
+router.patch("/forgotPassword/:userId", newPassword);
+
+router.delete("/logout/:id", authentication, logOut);
 
 router.get("/search/:query", searchByRestuarantOrFood);
 
@@ -57,7 +60,7 @@ router.post("/createOrder", createOrder);
 
 router.post("/paymentSuccess/:userId/:cartId", authentication, paymentSuccess);
 
-router.get("/allOrderItems/:userId/:orderId",authentication, getAllOrders);
+router.get("/allOrderItems/:userId/:orderId", authentication, getAllOrders);
 
 router.patch("/updateRating/:userId/:itemId", authentication, updateRating);
 
