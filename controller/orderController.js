@@ -234,9 +234,7 @@ async function filterBasedOnStatus(req, res) {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    // const orders=await orderRepository.findOne({
-    //   where:{}
-    // })
+
     const validOrderStatuses = ["Preparing", "Packed", "Dispatched"];
     const allOrders = await orderRepository.find({
       where: {
@@ -246,8 +244,6 @@ async function filterBasedOnStatus(req, res) {
       relations: ["orderItems", "orderItems.food"],
       order: { createdOn: "DESC" },
     });
-
-    // const order = ["Preparing", "Packed", "Dispatched"];
 
     const sortedOrders = allOrders.sort(
       (x, y) =>
@@ -265,8 +261,17 @@ async function filterBasedOnStatus(req, res) {
 
 async function cancelAndDelivered(req, res) {
   try {
+    const { userId } = req.params;
+    const userRepository = dataSource.getRepository("User");
     const orderRepository = dataSource.getRepository("Order");
+    const user = await userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     const orders = await orderRepository.find({
+      where: { id: userId },
       relations: ["orderItems", "orderItems.food"],
     });
 
