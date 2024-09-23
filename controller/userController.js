@@ -119,12 +119,13 @@ async function login(req, res) {
     await tokenRepository.save(tokenData);
 
     return res.status(200).json({
-      meassage: "Login successfull",
+      message: "Login successfull",
       Data: user,
       accessToken: accessToken,
       refreshToken: refreshToken,
     });
   } catch (error) {
+    console.log(error);
     return res.status(404).json({ message: "user signin failed" });
   }
 }
