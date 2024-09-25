@@ -16,7 +16,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://anugraha--soft-pothos-8a37b8.netlify.app",
   "https://soft-pothos-8a37b8.netlify.app",
-  "https://zing-meal-app-site.vercel.app"
+  "https://zing-meal-app-site-anugraha-ss-projects.vercel.app"
 ];
 
 app.use(
