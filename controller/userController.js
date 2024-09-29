@@ -59,153 +59,8 @@ async function signUp(req, res) {
   }
 }
 
-// async function login(req, res) {
-//   try {
-//     const { email, password } = req.body;
-
-//     if (!email || !password) {
-//       return res.status(401).json({ message: "Invalid credentials" });
-//     }
-
-//     const userRepository = dataSource.getRepository("User");
-//     const user = await userRepository.findOne({
-//       where: { email: email },
-//     });
-
-//     if (!user) {
-//       return res
-//         .status(401)
-//         .json({ message: `user not found with this ${email}` });
-//     }
-
-//     const isValidPassword = await encrypt.comparePassword(
-//       password,
-//       user.password
-//     );
-//     if (!isValidPassword) {
-//       return res.status(401).json({ message: "Invalid password" });
-//     }
-
-//     const accessToken = encrypt.generateToken({ id: user.id });
-//     const refreshToken = encrypt.generateRefreshToken({ id: user.id });
-
-//     const tokenRepository = dataSource.getRepository("RefreshToken");
-//     const tokenData = await tokenRepository.findOne({
-//       where: { itemId: user.id },
-//     });
-
-//     if (!tokenData) {
-//       const token = {
-//         id: cuid(),
-//         token: refreshToken,
-//         itemId: user.id,
-//         createdBy: email.substring(0, email.indexOf("@")),
-//         createdOn: new Date(),
-//       };
-//       await tokenRepository.save(token);
-
-//       return res.status(200).json({
-//         meassage: "Login successfull",
-//         Data: user,
-//         accessToken: accessToken,
-//         refreshToken: refreshToken,
-//       });
-//     }
-
-//     tokenData.token = refreshToken;
-//     tokenData.modifiedBy = user.name;
-//     tokenData.modifiedOn = new Date();
-
-//     await tokenRepository.save(tokenData);
-
-//     return res.status(200).json({
-//       message: "Login successfull",
-//       Data: user,
-//       accessToken: accessToken,
-//       refreshToken: refreshToken,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(404).json({ message: "user signin failed" });
-//   }
-// }
-
-// async function login(req, res) {
-//   const startTime = Date.now(); // Start measuring the total execution time
-//   try {
-//     const { email, password } = req.body;
-
-//     if (!email || !password) {
-//       return res.status(401).json({ message: "Invalid credentials" });
-//     }
-
-//     const userRepository = dataSource.getRepository("User");
-//     const user = await userRepository.findOne({
-//       where: { email: email },
-//     });
-
-//     if (!user) {
-//       return res.status(401).json({ message: `User not found with this ${email}` });
-//     }
-
-//     console.time("Password Comparison"); // Start timing for password comparison
-//     const isValidPassword = await encrypt.comparePassword(password, user.password);
-//     console.timeEnd("Password Comparison"); // End timing for password comparison
-
-//     if (!isValidPassword) {
-//       return res.status(401).json({ message: "Invalid password" });
-//     }
-
-//     const accessToken = encrypt.generateToken({ id: user.id });
-//     const refreshToken = encrypt.generateRefreshToken({ id: user.id });
-
-//     console.time("Token Repository Query"); // Start timing for token repository query
-//     const tokenRepository = dataSource.getRepository("RefreshToken");
-//     const tokenData = await tokenRepository.findOne({
-//       where: { itemId: user.id },
-//     });
-//     console.timeEnd("Token Repository Query"); // End timing for token repository query
-
-//     if (!tokenData) {
-//       const token = {
-//         id: cuid(),
-//         token: refreshToken,
-//         itemId: user.id,
-//         createdBy: email.substring(0, email.indexOf("@")),
-//         createdOn: new Date(),
-//       };
-//       await tokenRepository.save(token);
-
-//       console.log(`Login process took ${Date.now() - startTime}ms`);
-//       return res.status(200).json({
-//         message: "Login successful",
-//         Data: user,
-//         accessToken: accessToken,
-//         refreshToken: refreshToken,
-//       });
-//     }
-
-//     tokenData.token = refreshToken;
-//     tokenData.modifiedBy = user.name;
-//     tokenData.modifiedOn = new Date();
-
-//     await tokenRepository.save(tokenData);
-
-//     console.log(`Login process took ${Date.now() - startTime}ms`);
-//     return res.status(200).json({
-//       message: "Login successful",
-//       Data: user,
-//       accessToken: accessToken,
-//       refreshToken: refreshToken,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(404).json({ message: "User sign-in failed" });
-//   }
-// }
-
 async function login(req, res) {
-  console.time("Login process time"); // Start timer for profiling
+  console.time("Login process time");
   try {
     const { email, password } = req.body;
 
@@ -213,7 +68,6 @@ async function login(req, res) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Fetch user from the database
     const userRepository = dataSource.getRepository("User");
     const user = await userRepository.findOne({
       where: { email: email },
@@ -225,7 +79,6 @@ async function login(req, res) {
         .json({ message: `User not found with email ${email}` });
     }
 
-    // Validate password
     const isValidPassword = await encrypt.comparePassword(
       password,
       user.password
@@ -235,18 +88,15 @@ async function login(req, res) {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    // Generate tokens
     const accessToken = encrypt.generateToken({ id: user.id });
     const refreshToken = encrypt.generateRefreshToken({ id: user.id });
 
-    // Handle refresh token storage
     const tokenRepository = dataSource.getRepository("RefreshToken");
     let tokenData = await tokenRepository.findOne({
       where: { itemId: user.id },
     });
 
     if (!tokenData) {
-      // If no refresh token exists, create a new one
       const token = {
         id: cuid(),
         token: refreshToken,
@@ -256,15 +106,13 @@ async function login(req, res) {
       };
       await tokenRepository.save(token);
     } else {
-      // Update the existing refresh token
       tokenData.token = refreshToken;
       tokenData.modifiedBy = user.name;
       tokenData.modifiedOn = new Date();
       await tokenRepository.save(tokenData);
     }
 
-    // Return success response
-    console.timeEnd("Login process time"); // End timer
+    console.timeEnd("Login process time");
     return res.status(200).json({
       message: "Login successful",
       data: user,
@@ -272,8 +120,8 @@ async function login(req, res) {
       refreshToken: refreshToken,
     });
   } catch (error) {
-    console.error(error); // Log errors for better debugging
-    console.timeEnd("Login process time"); // End timer even in case of error
+    console.error(error);
+    console.timeEnd("Login process time");
     return res.status(500).json({ message: "User signin failed" });
   }
 }
