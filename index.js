@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: false }));
 const allowedOrigins = [
   "http://localhost:5173",
   "https://zingmeal.netlify.app",
-  "https://zing-meal-app-site-git-anugraha-anugraha-ss-projects.vercel.app"
+  "https://zing-meal-app-site-latmfu9v4-anugraha-ss-projects.vercel.app"
 ];
 
 app.use(
