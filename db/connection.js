@@ -13,6 +13,7 @@ const { Payment } = require("../model/Payment.js");
 dotenv.config();
 
 const { DB_PORT } = process.env;
+const { POSTGRES_URL } = process.env;
 var dataSource = new typeorm.DataSource({
   type: "postgres",
   host: process.env.DB_HOST,
@@ -20,6 +21,7 @@ var dataSource = new typeorm.DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
+  // url: POSTGRES_URL,
   synchronize: true,
   logging: false,
   entities: [
