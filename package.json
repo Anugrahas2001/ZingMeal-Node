@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "schema:sync": "typeorm schema:sync"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
