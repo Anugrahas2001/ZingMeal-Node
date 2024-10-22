@@ -72,6 +72,10 @@ const dataSource = new typeorm.DataSource({
   database: DB_NAME,
   synchronize: true,
   logging: false,
+
+  ssl: {
+    rejectUnauthorized: false, // This is important if you are using services like Heroku or Render
+  },
   entities: [
     User,
     Restaurant,

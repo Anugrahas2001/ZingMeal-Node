@@ -32,6 +32,7 @@ const Order = new EntitySchema({
     paymentMethods: {
       type: "enum",
       enum: paymentMethods,
+      default:paymentMethods.CASH_ON_DELIVERY,
     },
     createdBy: {
       type: "varchar",

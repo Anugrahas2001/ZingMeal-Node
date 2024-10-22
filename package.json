@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node index.js",
-    "schema:sync": "typeorm schema:sync"
+    "schema:sync": "typeorm schema:sync -d ./db/connection.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
