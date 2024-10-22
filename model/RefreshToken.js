@@ -2,7 +2,7 @@ const { EntitySchema } = require("typeorm");
 
 const RefreshToken = new EntitySchema({
   name: "RefreshToken",
-  tableName: "refreshToken",
+  tableName: "refreshtoken",
   columns: {
     id: {
       primary: true,

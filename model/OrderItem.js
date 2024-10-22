@@ -2,7 +2,7 @@ const { EntitySchema } = require("typeorm");
 
 const OrderItem = new EntitySchema({
   name: "OrderItem",
-  tableName: "orderItem",
+  tableName: "orderitem",
   columns: {
     id: {
       primary: true,

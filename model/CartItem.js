@@ -2,7 +2,7 @@ const EntitySchema = require("typeorm").EntitySchema;
 
 const CartItem = new EntitySchema({
   name: "CartItem",
-  tableName: "cartItems",
+  tableName: "cartitems",
   columns: {
     id: {
       primary: true,
