@@ -42,11 +42,8 @@
 
 const typeorm = require("typeorm");
 const dotenv = require("dotenv");
-
-// Load environment variables
 dotenv.config();
 
-// Import models
 const { User } = require("../model/User.js");
 const { Restaurant } = require("../model/Restaurant.js");
 const { RefreshToken } = require("../model/RefreshToken.js");
@@ -65,15 +62,15 @@ console.log("DB_HOST:", DB_HOST);
 console.log("DB_PORT:", DB_PORT);
 console.log("DB_USER:", DB_USER);
 
-// Set up the data source
+
 const dataSource = new typeorm.DataSource({
   type: "postgres",
   host: DB_HOST,
-  port: Number(DB_PORT),  // Ensure port is converted to a number
+  port: Number(DB_PORT),
   username: DB_USER,
   password: DB_PASS,
   database: DB_NAME,
-  synchronize: true,  // Consider setting this to false in production
+  synchronize: true,
   logging: false,
   entities: [
     User,
