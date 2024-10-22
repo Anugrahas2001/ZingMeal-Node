@@ -18,7 +18,6 @@ const Payment = new EntitySchema({
     },
     razorpayOrderId: {
       type: "varchar",
-      nullable: false,
       unique: true,
     },
     razorpaySignature: {
