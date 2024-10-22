@@ -57,7 +57,6 @@ const { Payment } = require("../model/Payment.js");
 
 const { DB_PORT, DB_HOST, DB_USER, DB_PASS, DB_NAME } = process.env;
 
-// Check if environment variables are properly loaded
 console.log("DB_HOST:", DB_HOST);
 console.log("DB_PORT:", DB_PORT);
 console.log("DB_USER:", DB_USER);
@@ -86,11 +85,10 @@ const dataSource = new typeorm.DataSource({
     OrderItem,
     CartItem,
     Cart,
-    Payment,
+    // Payment,
   ],
 });
 
-// Attempt to initialize the connection
 dataSource.initialize().then(() => {
   console.log("Data source has been initialized successfully.");
 }).catch((err) => {
